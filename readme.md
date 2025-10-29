@@ -4,6 +4,12 @@
 
 ## 2. 기술 스택 (Tech Stack)
 
+- **언어 (Language)**: [C#](https://learn.microsoft.com/dotnet/csharp/)
+- **게임 엔진 (Game Engine)**: [Unity (2D / 3D)](https://unity.com/)
+- **데이터베이스 (Database)**: [SQLite](https://www.sqlite.org/)
+- **버전 관리 (Version Control)**: [Git](https://git-scm.com/), [GitHub](https://github.com/)
+- **개발 환경 (Development Tools)**: [Visual Studio](https://visualstudio.microsoft.com/), [Unity Editor](https://unity.com/products/unity-editor)
+
 ## 3. 프로젝트 개요 (Project Overview)
 
 ### 3.1 프로젝트 1
