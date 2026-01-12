@@ -1,6 +1,6 @@
-# 🎮 양지훈 개발자 포트폴리오
+# 양지훈 개발자 포트폴리오
 
-### 🛠 기술 역량
+### 기술 역량
 
 * **Language & Core**: .NET C#, Unity C#, Python, Data Structures
 
@@ -14,11 +14,11 @@
 
 ---
 
-## 🏆 Main Project: [샴블즈 (Shambles)](https://play.google.com/store/apps/details?id=com.gravity.shambles.aos&hl=ko)
+## Main Project: [샴블즈 (Shambles)](https://play.google.com/store/apps/details?id=com.gravity.shambles.aos&hl=ko)
 
 **Role**: 리드 프로그래머 (Lead Programmer)
 
-#### 📋 핵심 개발 및 설계
+#### 핵심 개발 및 설계
 
 * **Sqlite (DAO, DTO)**
 
