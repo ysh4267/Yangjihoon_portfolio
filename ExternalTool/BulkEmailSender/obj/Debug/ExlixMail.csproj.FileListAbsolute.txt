@@ -1,0 +1,11 @@
+C:\Users\YangJiHoon\Desktop\ExlixMail\bin\Debug\ExlixMail.exe.config
+C:\Users\YangJiHoon\Desktop\ExlixMail\bin\Debug\ExlixMail.exe
+C:\Users\YangJiHoon\Desktop\ExlixMail\bin\Debug\ExlixMail.pdb
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.csproj.AssemblyReference.cache
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.csproj.SuggestedBindingRedirects.cache
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.Form1.resources
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.Properties.Resources.resources
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.csproj.GenerateResource.cache
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.csproj.CoreCompileInputs.cache
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.exe
+C:\Users\YangJiHoon\Desktop\ExlixMail\obj\Debug\ExlixMail.pdb
