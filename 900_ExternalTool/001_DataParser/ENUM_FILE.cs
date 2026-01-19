@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ExlixDataConverter
+namespace DataParser
 {
 	public enum ENUM_DROPDOWN_MENU
 	{

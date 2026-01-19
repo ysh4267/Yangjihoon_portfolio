@@ -1,4 +1,4 @@
-﻿namespace ExlixDataConverter
+﻿namespace DataParser
 {
 	partial class MainForm
 	{
@@ -42,8 +42,8 @@
 			this.ExcelFilePathOutButton = new System.Windows.Forms.Button();
 			this.ExcelFilePathListBox = new System.Windows.Forms.ListBox();
 			this.ExcelFilePathClearButton = new System.Windows.Forms.Button();
-			this.MokokoCheckBox = new System.Windows.Forms.CheckBox();
-			this.MHClearCheckBox = new System.Windows.Forms.CheckBox();
+			this.CompletionSoundCheckBox = new System.Windows.Forms.CheckBox();
+			this.SuccessSoundCheckBox = new System.Windows.Forms.CheckBox();
 			this.SuspendLayout();
 			// 
 			// DBFilePathButton
@@ -197,27 +197,29 @@
 			this.ExcelFilePathClearButton.UseVisualStyleBackColor = true;
 			this.ExcelFilePathClearButton.Click += new System.EventHandler(this.ExcelFilePathClearButton_Click);
 			// 
-			// MokokoCheckBox
+			// CompletionSoundCheckBox
 			// 
-			this.MokokoCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.MokokoCheckBox.AutoSize = true;
-			this.MokokoCheckBox.Location = new System.Drawing.Point(761, 15);
-			this.MokokoCheckBox.Name = "MokokoCheckBox";
-			this.MokokoCheckBox.Size = new System.Drawing.Size(15, 14);
-			this.MokokoCheckBox.TabIndex = 14;
-			this.MokokoCheckBox.UseVisualStyleBackColor = true;
-			this.MokokoCheckBox.CheckedChanged += new System.EventHandler(this.MokokoCheckBox_CheckedChanged);
+			this.CompletionSoundCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.CompletionSoundCheckBox.AutoSize = true;
+			this.CompletionSoundCheckBox.Location = new System.Drawing.Point(761, 15);
+			this.CompletionSoundCheckBox.Name = "CompletionSoundCheckBox";
+			this.CompletionSoundCheckBox.Size = new System.Drawing.Size(15, 14);
+			this.CompletionSoundCheckBox.TabIndex = 14;
+			this.CompletionSoundCheckBox.Text = "Sound A";
+			this.CompletionSoundCheckBox.UseVisualStyleBackColor = true;
+			this.CompletionSoundCheckBox.CheckedChanged += new System.EventHandler(this.CompletionSoundCheckBox_CheckedChanged);
 			// 
-			// MHClearCheckBox
+			// SuccessSoundCheckBox
 			// 
-			this.MHClearCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.MHClearCheckBox.AutoSize = true;
-			this.MHClearCheckBox.Location = new System.Drawing.Point(761, 32);
-			this.MHClearCheckBox.Name = "MHClearCheckBox";
-			this.MHClearCheckBox.Size = new System.Drawing.Size(15, 14);
-			this.MHClearCheckBox.TabIndex = 15;
-			this.MHClearCheckBox.UseVisualStyleBackColor = true;
-			this.MHClearCheckBox.CheckedChanged += new System.EventHandler(this.MHClearCheckBox_CheckedChanged);
+			this.SuccessSoundCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.SuccessSoundCheckBox.AutoSize = true;
+			this.SuccessSoundCheckBox.Location = new System.Drawing.Point(761, 32);
+			this.SuccessSoundCheckBox.Name = "SuccessSoundCheckBox";
+			this.SuccessSoundCheckBox.Size = new System.Drawing.Size(15, 14);
+			this.SuccessSoundCheckBox.TabIndex = 15;
+			this.SuccessSoundCheckBox.Text = "Sound B";
+			this.SuccessSoundCheckBox.UseVisualStyleBackColor = true;
+			this.SuccessSoundCheckBox.CheckedChanged += new System.EventHandler(this.SuccessSoundCheckBox_CheckedChanged);
 			// 
 			// MainForm
 			// 
@@ -225,8 +227,8 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(800, 409);
-			this.Controls.Add(this.MHClearCheckBox);
-			this.Controls.Add(this.MokokoCheckBox);
+			this.Controls.Add(this.SuccessSoundCheckBox);
+			this.Controls.Add(this.CompletionSoundCheckBox);
 			this.Controls.Add(this.ExcelFilePathClearButton);
 			this.Controls.Add(this.ExcelFilePathListBox);
 			this.Controls.Add(this.ExcelFilePathOutButton);
@@ -245,7 +247,7 @@
 			this.MinimumSize = new System.Drawing.Size(816, 361);
 			this.Name = "MainForm";
 			this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-			this.Text = "ExlixSqliteConverter";
+			this.Text = "DataParser";
 			this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
 			this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
 			this.ResumeLayout(false);
@@ -268,8 +270,8 @@
 		public System.Windows.Forms.Button ExcelFilePathOutButton;
 		public System.Windows.Forms.Button ExcelFilePathClearButton;
 		public System.Windows.Forms.ListBox ExcelFilePathListBox;
-		private System.Windows.Forms.CheckBox MokokoCheckBox;
-		private System.Windows.Forms.CheckBox MHClearCheckBox;
+		private System.Windows.Forms.CheckBox CompletionSoundCheckBox;
+		private System.Windows.Forms.CheckBox SuccessSoundCheckBox;
 	}
 }
 

@@ -8,7 +8,7 @@ using System.Data;
 using System.IO;
 using Newtonsoft.Json.Converters;
 
-namespace ExlixDataConverter
+namespace DataParser
 {
 	class DataReader
 	{

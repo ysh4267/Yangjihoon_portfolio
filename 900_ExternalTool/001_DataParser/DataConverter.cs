@@ -11,7 +11,7 @@ using System.Threading;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ExlixDataConverter
+namespace DataParser
 {
 	class DataConverter
 	{

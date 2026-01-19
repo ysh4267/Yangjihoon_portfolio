@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 
-namespace ExlixMail
-{
-	internal class ExcelManager
-	{
-		public List<(string id, string body)> ReadData(string filePath)
-		{
+namespace BulkEmailSender {
+	internal class ExcelManager {
+		public List<(string id, string body)> ReadData(string filePath) {
 			List<(string id, string body)> dataList = new List<(string, string)>();
 
 			// 엑셀 파일 읽기
@@ -17,8 +14,7 @@ namespace ExlixMail
 			Excel.Worksheet worksheet = workbook.Worksheets[1];
 
 			int row = 1;
-			while (worksheet.Cells[row, 1].Value != null)
-			{
+			while (worksheet.Cells[row, 1].Value != null) {
 				string email = worksheet.Cells[row, 1].Value.ToString();
 				string content = worksheet.Cells[row, 2].Value.ToString();
 				dataList.Add((email, content));

@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 
-namespace ExlixDataConverter
+namespace DataParser
 {
 	public partial class MainForm : Form
 	{
@@ -18,8 +18,8 @@ namespace ExlixDataConverter
 		ENUM_LANGUAGE currentLanguageMenu;
 		ENUM_DROPDOWN_MENU currentSelectedMenu;
 		ENUM_DATA_CHECK_MENU currentSubCheckMenu;
-		SoundPlayer mokokoSoundPlayer = new SoundPlayer(Properties.Resources.mokoko);
-		SoundPlayer mhClearSoundPlayer = new SoundPlayer(Properties.Resources.mh_clear);
+		SoundPlayer completionSoundPlayer = new SoundPlayer(Properties.Resources.completion_sound);
+		SoundPlayer successSoundPlayer = new SoundPlayer(Properties.Resources.success_sound);
 
 		public MainForm()
 		{
@@ -39,15 +39,15 @@ namespace ExlixDataConverter
 
 			ExcelFilePathOutButton.Enabled = false;
 			//완료 사운드
-			mokokoSoundPlayer.Load();
-			mhClearSoundPlayer.Load();
+			completionSoundPlayer.Load();
+			successSoundPlayer.Load();
 		}
 
 		private void DBFilePathButton_Click(object sender, EventArgs e)
 		{
 			//Load DBFile
 			OpenFileDialog _openFileDialog = new OpenFileDialog();
-			_openFileDialog.Filter = "SQLite Files (*.sqlite;*.db;*.exlix)|*.sqlite;*.db;*.exlix|All files (*.*)|*.*";
+			_openFileDialog.Filter = "SQLite Files (*.sqlite;*.db;*.dat)|*.sqlite;*.db;*.dat|All files (*.*)|*.*";
 			_openFileDialog.FilterIndex = 1;
 			_openFileDialog.RestoreDirectory = true;
 
@@ -221,8 +221,8 @@ namespace ExlixDataConverter
 				//취소토큰 초기화
 				cancellationTokenSource = new CancellationTokenSource();
 				//사운드 초기화
-				mokokoSoundPlayer.Stop();
-				mhClearSoundPlayer.Stop();
+				completionSoundPlayer.Stop();
+				successSoundPlayer.Stop();
 				UpdateProgressBar(0);
 				stopwatch.Start();
 			}
@@ -254,13 +254,13 @@ namespace ExlixDataConverter
 				{
 					SystemSounds.Exclamation.Play();
 				}
-				else if (MHClearCheckBox.Checked == true)
+				else if (SuccessSoundCheckBox.Checked == true)
 				{
-					mhClearSoundPlayer.Play();
+					successSoundPlayer.Play();
 				}
-				else if (MokokoCheckBox.Checked == true)
+				else if (CompletionSoundCheckBox.Checked == true)
 				{
-					mokokoSoundPlayer.Play();
+					completionSoundPlayer.Play();
 				}
 				else
 				{
@@ -448,7 +448,7 @@ namespace ExlixDataConverter
 					string[] filePaths = (string[])e.Data.GetData(DataFormats.FileDrop);
 
 					// 허용된 확장자 목록
-					List<string> allowedExtensions = new List<string> { ".xlsx", ".xlsm", ".xls", ".sqlite", ".db", ".exlix" };
+					List<string> allowedExtensions = new List<string> { ".xlsx", ".xlsm", ".xls", ".sqlite", ".db", ".dat" };
 
 					// 드래그된 파일 중 허용되지 않은 확장자가 있다면 None 처리
 					foreach (string filePath in filePaths)
@@ -507,7 +507,7 @@ namespace ExlixDataConverter
 						// Add the new file path
 						this.ExcelFilePathListBox.Items.Add(filePath);
 					}
-					else if (fileExtension == ".sqlite" || fileExtension == ".db" || fileExtension == ".exlix")
+					else if (fileExtension == ".sqlite" || fileExtension == ".db" || fileExtension == ".dat")
 					{
 						this.DBFilePathTextbox.Text = filePath;
 					}
@@ -515,21 +515,21 @@ namespace ExlixDataConverter
 			}
 		}
 
-		private void MokokoCheckBox_CheckedChanged(object sender, EventArgs e)
+		private void CompletionSoundCheckBox_CheckedChanged(object sender, EventArgs e)
 		{
-			mhClearSoundPlayer.Stop();
-			if (MokokoCheckBox.Checked == true)
+			successSoundPlayer.Stop();
+			if (CompletionSoundCheckBox.Checked == true)
 			{
-				MHClearCheckBox.Checked = false;
+				SuccessSoundCheckBox.Checked = false;
 			}
 		}
 
-		private void MHClearCheckBox_CheckedChanged(object sender, EventArgs e)
+		private void SuccessSoundCheckBox_CheckedChanged(object sender, EventArgs e)
 		{
-			mokokoSoundPlayer.Stop();
-			if (MHClearCheckBox.Checked == true)
+			completionSoundPlayer.Stop();
+			if (SuccessSoundCheckBox.Checked == true)
 			{
-				MokokoCheckBox.Checked = false;
+				CompletionSoundCheckBox.Checked = false;
 			}
 		}
 	}

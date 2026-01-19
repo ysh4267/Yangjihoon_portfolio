@@ -3,18 +3,15 @@ using System.Net;
 using System.Net.Mail;
 
 
-namespace ExlixMail
-{
-	internal class MailManager
-	{
+namespace BulkEmailSender {
+	internal class MailManager {
 		private SmtpClient smtpClient;
 		private string smtpServer;
 		private int smtpPort;
 		private string smtpUsername;
 		private string smtpPassword;
 
-		public MailManager(string smtpUsername, string smtpPassword)
-		{
+		public MailManager(string smtpUsername, string smtpPassword) {
 			this.smtpServer = "smtp.gmail.com";
 			this.smtpPort = 587;
 			this.smtpUsername = smtpUsername;
@@ -26,17 +23,13 @@ namespace ExlixMail
 			smtpClient.Credentials = new NetworkCredential(smtpUsername, smtpPassword);
 		}
 
-		public string SendMail(string senderEmail, string recipientEmail, string subject, string body)
-		{
-			try
-			{
+		public string SendMail(string senderEmail, string recipientEmail, string subject, string body) {
+			try {
 				// 메일 발송
 				MailMessage mail = new MailMessage(senderEmail, recipientEmail, subject, body);
 				smtpClient.Send(mail);
 				return $"메일 발송 완료: {recipientEmail}";
-			}
-			catch (Exception ex)
-			{
+			} catch (Exception ex) {
 				return $"메일 발송 오류: {ex.Message}";
 			}
 		}
