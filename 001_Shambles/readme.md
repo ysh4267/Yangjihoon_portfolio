@@ -313,41 +313,32 @@ public class BattleStatus : IBattleStatusAction {
 
     전투에서 사용되는 모든 오브젝트는 공통 인터페이스를 상속받아 다형성 기반으로 동작합니다. 효과 처리는 `BattleManager`를 통해 일관되게 수행됩니다.
 
-* #### 카드 (Card)
+    * **카드 (Card)**: 플레이어 카드와 적 카드 모두 `IBattleFactor`를 상속받아 동일한 효과 처리 파이프라인을 사용합니다.
+        * `IBattlePlayerCard`: 세력, 코스트, 수치 데이터, 사용 후 목적지, 연계 장비 등
+        * `IBattleEnemyCard`: 소유자/타겟 상태, 카드 초기화 및 발동 메서드
+        * 적의 공격과 스킬도 동일한 카드 시스템을 기반으로 동작하여 로직 재사용성 극대화
 
-    플레이어 카드와 적 카드 모두 `IBattleFactor`를 상속받아 동일한 효과 처리 파이프라인을 사용합니다.
+    * **버프 (Buff)**: `IBattleBuff` 인터페이스를 통해 모든 버프/디버프를 일관되게 관리합니다.
+        * 버프/디버프 유형 구분 (`ENUM_BUFF_TYPE`)
+        * 카운터 감소 방식 지정 (`ENUM_BUFF_COUNTER_TYPE`: 턴 종료, 피격 시, 행동 시 등)
+        * 활성화/종료 시점 콜백 메서드 제공
+        * `IBattleBuffActive`, `IBattleBuffPassive`로 능동/수동 버프 분리
 
-    * `IBattlePlayerCard`: 세력, 코스트, 수치 데이터, 사용 후 목적지, 연계 장비 등
-    * `IBattleEnemyCard`: 소유자/타겟 상태, 카드 초기화 및 발동 메서드
-    * 적의 공격과 스킬도 동일한 카드 시스템을 기반으로 동작하여 로직 재사용성 극대화
+    * **장비 (Equipment)**: `IBattleEquipment` 인터페이스를 통해 장비 효과를 관리합니다. 장비 효과는 플레이어 상태에 직접 영향을 미치며, `BattleDynamicValues`의 장비 플래그를 통해 특수 효과를 활성화합니다.
+
+    * **적 (Enemy)**: `IBattleEnemy` 인터페이스를 통해 적의 행동 패턴을 관리합니다. 패턴 인덱스 기반으로 다음 행동을 결정하고, UI에 미리보기를 표시합니다.
+        * 패턴 기반 행동 시스템 (공격, 방어, 버프 등)
+        * 다음 행동 타입 UI 갱신
+        * 적별 고유 사운드 에셋 관리
+
 
 ```csharp
-// 플레이어 카드 인터페이스
-public interface IBattlePlayerCard : IBattleCard {
-    bool IsUsable { get; set; }
-    ENUM_FACTION FactionEnum { get; set; }
-    BattleCost Cost { get; set; }
-    List<Equipment> Equipments { get; set; }
-    int CostCalc();
-}
-
 // 적 카드 인터페이스 - 동일한 카드 시스템 기반
 public interface IBattleEnemyCard : IBattleFactor {
     IBattleStatus OwnerStatus { get; set; }
     void ProceedCardAction(BattleStatus cardTargetStatus, int value);
 }
-```
 
-* #### 버프 (Buff)
-
-    `IBattleBuff` 인터페이스를 통해 모든 버프/디버프를 일관되게 관리합니다.
-
-    * 버프/디버프 유형 구분 (`ENUM_BUFF_TYPE`)
-    * 카운터 감소 방식 지정 (`ENUM_BUFF_COUNTER_TYPE`: 턴 종료, 피격 시, 행동 시 등)
-    * 활성화/종료 시점 콜백 메서드 제공
-    * `IBattleBuffActive`, `IBattleBuffPassive`로 능동/수동 버프 분리
-
-```csharp
 // 버프 인터페이스
 public interface IBattleBuff : IBattleFactor {
     ENUM_BUFF_TYPE EffectType { get; }
@@ -356,28 +347,14 @@ public interface IBattleBuff : IBattleFactor {
     void ActivateBuffEffect();
     void EndBuffEffect();
 }
-```
 
-* #### 장비 (Equipment)
-
-    `IBattleEquipment` 인터페이스를 통해 장비 효과를 관리합니다. 장비 효과는 플레이어 상태에 직접 영향을 미치며, `BattleDynamicValues`의 장비 플래그를 통해 특수 효과를 활성화합니다.
-
-```csharp
+// 장비 인터페이스
 public interface IBattleEquipment {
     Equipment ThisEquipment { get; set; }
     void ActivateEquipmentEffect(BattlePlayerStatus playerStatus);
 }
-```
 
-* #### 적 (Enemy)
-
-    `IBattleEnemy` 인터페이스를 통해 적의 행동 패턴을 관리합니다. 패턴 인덱스 기반으로 다음 행동을 결정하고, UI에 미리보기를 표시합니다.
-
-    * 패턴 기반 행동 시스템 (공격, 방어, 버프 등)
-    * 다음 행동 타입 UI 갱신
-    * 적별 고유 사운드 에셋 관리
-
-```csharp
+// 적 인터페이스
 public interface IBattleEnemy {
     int PatternIndex { get; set; }
     ENUM_CARD_TYPE NextPatternTypeEnum { get; set; }
