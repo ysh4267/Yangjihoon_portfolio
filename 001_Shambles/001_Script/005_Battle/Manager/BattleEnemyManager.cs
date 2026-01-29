@@ -293,13 +293,13 @@ public class BattleEnemyManager : MonoBehaviour {
 	private void CheckHidingEnemies() {
 		int hidingCount = 0;
 		foreach (var enemy in BattleEnemyObjectList) {
-			if (enemy.enemyStatus.DynamicValues.isHiding)
+			if (enemy.enemyStatus.DynamicValues.isBuffFlag_003)
 				hidingCount++;
 		}
 		if (hidingCount == EnemyCount)
 			ProceedEnemyAction(ALL_ENEMIES, (enemy) => {
-				if (enemy.enemyStatus.DynamicValues.isHiding)
-					enemy.enemyStatus.BuffCounter.RemoveBuff(ENUM_BUFF_INDEX.HIDING);
+				if (enemy.enemyStatus.DynamicValues.isBuffFlag_003)
+					enemy.enemyStatus.BuffCounter.RemoveBuff(ENUM_BUFF_INDEX.EXAMPLE_BUFF_007);
 			});
 	}
 

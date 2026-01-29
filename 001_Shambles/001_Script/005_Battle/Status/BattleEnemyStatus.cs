@@ -78,7 +78,7 @@ public class BattleEnemyStatus : IBattleStatus {
         BattleManager.GetInstance().battlePhaseManager.ProceedPhase(TargetEnum, DAMAGE_STANDBY);
 
         int prevHp = enemyStatus.current_hp;
-        if (!(finalDamage.damage <= 0 || DynamicValues.isStopped || DynamicValues.isInvincible)) {
+        if (!(finalDamage.damage <= 0 || DynamicValues.isBuffFlag_014 || DynamicValues.isBuffFlag_006)) {
             if (finalDamage.damageType == ENUM_DAMAGE_TYPE.PENETRATE) {
                 enemyStatus.current_hp -= finalDamage.damage;
             }
@@ -152,7 +152,7 @@ public class BattleEnemyStatus : IBattleStatus {
 
                 if (factor is IBattleCard) { // 스킬 또는 카드에 의한 효과만 적용
                     if (finalDamage.attacker != null) {
-                        if (finalDamage.attacker.DynamicValues.isBloodSucking) finalDamage.attacker.GainHP(finalDamage.attacker.BuffCounter.GetBuff(ENUM_BUFF_INDEX.BLOOD_SUCKING).battleBuffScript, (int)(finalDamage.damage * 0.3f));
+                        if (finalDamage.attacker.DynamicValues.isBuffFlag_004) finalDamage.attacker.GainHP(finalDamage.attacker.BuffCounter.GetBuff(ENUM_BUFF_INDEX.EXAMPLE_BUFF_004).battleBuffScript, (int)(finalDamage.damage * 0.3f));
                     }
 
                     BattleManager.GetInstance().battlePhaseManager.ProceedPhase(TargetEnum, DIRECT_DAMAGED);
@@ -175,24 +175,24 @@ public class BattleEnemyStatus : IBattleStatus {
         float m_damage = battleDamage.damage;
 
         //대미지 타입 변경
-        if (DynamicValues.isDisarmed) battleDamage.damageType = ENUM_DAMAGE_TYPE.PENETRATE;
+        if (DynamicValues.isBuffFlag_012) battleDamage.damageType = ENUM_DAMAGE_TYPE.PENETRATE;
 
         if (battleDamage.damageSourceType == ENUM_DAMAGE_SOURCE_TYPE.DIRECT_ATTACK) {
-            if (battleDamage.attacker?.DynamicValues.isPenetrating ?? false) battleDamage.damageType = ENUM_DAMAGE_TYPE.PENETRATE;
+            if (battleDamage.attacker?.DynamicValues.isBuffFlag_001 ?? false) battleDamage.damageType = ENUM_DAMAGE_TYPE.PENETRATE;
             //가감 연산
-            if (DynamicValues.isHarden) m_damage -= 2f;
-            if (DynamicValues.isHarden_2) m_damage -= 5f;
-            if (playerStatus.DynamicValues.hasEquipment_318) m_damage += BuffCounter.numberOfDebuffs;
+            if (DynamicValues.isBuffFlag_002) m_damage -= 2f;
+            if (DynamicValues.isBuffFlag_002_2) m_damage -= 5f;
+            if (playerStatus.DynamicValues.hasEquipment_Example_006) m_damage += BuffCounter.numberOfDebuffs;
 
             //승제 연산
-            if (DynamicValues.isMarked) {
-                if (damage.attacker?.DynamicValues.isWeaknessDetection ?? false) m_damage *= 1.5f;
+            if (DynamicValues.isBuffFlag_011) {
+                if (damage.attacker?.DynamicValues.isCardEffect_004 ?? false) m_damage *= 1.5f;
                 else m_damage *= 1.2f;
             }
-            if (DynamicValues.isCorrosion && CurrentShield > 0) m_damage *= 1.5f;
-            if (DynamicValues.isTargetFixed) m_damage *= 0.5f;
-            if (playerStatus.DynamicValues.isDefenseDestruction && CurrentShield > 0) m_damage *= 1.5f;
-            if (playerStatus.DynamicValues.hasEquipment_313 && CurrentShield > 0) m_damage *= 1.2f;
+            if (DynamicValues.isBuffFlag_008 && CurrentShield > 0) m_damage *= 1.5f;
+            if (DynamicValues.isCardEffect_001) m_damage *= 0.5f;
+            if (playerStatus.DynamicValues.isBuffFlag_005 && CurrentShield > 0) m_damage *= 1.5f;
+            if (playerStatus.DynamicValues.hasEquipment_Example_007 && CurrentShield > 0) m_damage *= 1.2f;
         }
 
         if (BattleManager.GetInstance().battleEventManager.ExtraDamageOnTargetDamaged != null && factor != null)
@@ -213,8 +213,8 @@ public class BattleEnemyStatus : IBattleStatus {
 
     public void GainShield(IBattleFactor factor, int amount) {
         int change = 0;
-		if (DynamicValues.isRampaged) return;
-		if (DynamicValues.isFrenzy) amount -= (int)(BuffCounter.GetBuffCount(ENUM_BUFF_INDEX.FRENZY) / 3f * amount);
+		if (DynamicValues.isBuffFlag_018) return;
+		if (DynamicValues.isBuffFlag_010) amount -= (int)(BuffCounter.GetBuffCount(ENUM_BUFF_INDEX.EXAMPLE_BUFF_005) / 3f * amount);
 
         if (amount > 0) {
             int previousShield = currentShield;
@@ -237,8 +237,8 @@ public class BattleEnemyStatus : IBattleStatus {
     public int GainHP(IBattleFactor factor, int amount) {
         int change = 0;
 
-		if (DynamicValues.isCorruption) return change;
-		if (DynamicValues.isRampaged) return change;
+		if (DynamicValues.isBuffFlag_009) return change;
+		if (DynamicValues.isBuffFlag_018) return change;
 
 		if (amount > 0) {
             int previousHp = CurrentHp;
@@ -290,7 +290,7 @@ public class BattleEnemyStatus : IBattleStatus {
             //눈먼자들의 도시: 모든 적과 자신에게 실명을 부여하십시오.
             int BlindObjectCount = 0;
             foreach (var Target in BattleManager.GetInstance().GetBattleStatus(ALL).TargestList) {
-                if (Target.BuffCounter.HasEnoughBuffCount(ENUM_BUFF_INDEX.BLIND, 1))
+                if (Target.BuffCounter.HasEnoughBuffCount(ENUM_BUFF_INDEX.EXAMPLE_BUFF_006, 1))
                     BlindObjectCount++;
             }
             if (BlindObjectCount == BattleManager.GetInstance().GetBattleStatus(ALL).TargestList.Count)

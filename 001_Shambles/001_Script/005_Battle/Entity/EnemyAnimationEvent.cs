@@ -8,8 +8,8 @@ using UnityEngine;
 /// 애니메이션 키프레임에서 호출되는 공격, 피격, 사망 등의 이벤트 처리
 /// </summary>
 public class EnemyAnimationEvent : MonoBehaviour {
-	BattleEnemyObject enemyObject = null;
-	bool isMyTurn => BattleManager.GetInstance().CurrentTurn == enemyObject.enemyPhaseTargetEnum;
+	BattleEnemyObject enemyObject = null;            // 이 애니메이션 이벤트가 속한 적 개체 참조
+	bool isMyTurn => BattleManager.GetInstance().CurrentTurn == enemyObject.enemyPhaseTargetEnum;  // 현재 이 적의 턴인지 확인
 
 
 	private void Start() {

@@ -14,8 +14,6 @@
     *   선택에 따라 달라지는 수많은 분기점과 멀티 엔딩
     *   전략적인 턴제 카드 전투 시스템
 
-
-
 ## 2. 사용된 기술 스택
 Unity, C#, SQLite
 
@@ -31,6 +29,8 @@ Unity, C#, SQLite
 
     `SQLiteManager`는 DB 연결과 쿼리 실행을 담당하는 정적 클래스입니다. 게임 데이터, 플레이어 데이터, 유저 데이터 총 3개의 DB 파일을 관리하며, 각 DB에 대한 연결을 배열로 유지합니다. 연결이 닫혀있으면 자동으로 열고, DB 파일이 존재하지 않으면 StreamingAssets에서 복사하여 생성합니다. 씬이 언로드될 때 열려있는 모든 데이터 리더를 자동으로 종료하여 리소스 누수를 방지합니다.
 
+    `TextParser`는 문자열 데이터를 특정 규칙에 따라 파싱하는 유틸리티 클래스입니다. 카드 설명 텍스트에 포함된 태그(`#damage:`, `#shield:` 등)를 실제 수치로 변환하고, 스탯 기반 계산을 수행합니다.
+
     * **타입 안전 변환**: 제네릭 메서드를 통해 `DBNull` 처리와 `Nullable` 타입 변환을 자동으로 수행합니다.
     * **Enum 자동 매칭**: 레벤슈타인 거리 알고리즘을 활용하여 문자열 오타나 표기 차이가 있어도 가장 유사한 Enum 값을 찾아 반환합니다.
     * **리소스 자동 관리**: `IDisposable` 인터페이스를 구현하여 `using` 문과 함께 사용 시 자동으로 리소스를 해제합니다.
@@ -43,7 +43,24 @@ public T GetSafeValue<T>(int colIndex) {
     }
     return default;
 }
+
+// 카드 설명 텍스트를 스탯 기반으로 계산하여 파싱
+public static string ParseStatusBasedCardDescriptionText(this string rawText, int[] status, Card card) {
+    foreach (var item in textList) {
+        if (item.Contains(damageTag) || item.Contains(shieldTag) || item.Contains(healTag)) {
+            int baseValue = int.Parse(temp[temp.Length - 1]);
+            int calcValue = Mathf.FloorToInt(StatusCalc(item, card.cardFactionEnum, baseValue));
+            result += calcValue.ColoredStringValueWithValue(baseValue);
+        }
+    }
+    return result;
+}
 ```
+
+> - [CustomDataReader.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/CustomDataReader.cs)
+> - [SQLiteManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/SQLiteManager.cs)
+> - [TextParser.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/TextParser.cs)
+
 
 * #### Data Transfer Object (DTO)
 
@@ -55,14 +72,16 @@ public T GetSafeValue<T>(int colIndex) {
     * **최적화된 DTO**
         * 식별자와 실시간 동기화가 필요한 필수 상태값만 포함합니다.
         * 빈번한 업데이트나 대규모 인덱싱 작업 시 발생하는 I/O 부하를 최적화합니다.
+    * **다형성 기반 인터페이스 설계**
+        * 공통 인터페이스를 통해 서로 다른 타입의 DTO들을 일관된 방식으로 처리합니다.
+        * 카드, 장비, 버프 등 다양한 게임 오브젝트가 동일한 인터페이스를 상속받아 통합 관리됩니다.
+        * 새로운 DTO 타입 추가 시 기존 로직 수정 없이 확장이 가능합니다.
 
 ```csharp
 // 메인 데이터 - 여러 DAO를 통해 조합되는 완전한 데이터 객체
 public class PlayerInfo {
-    // 단순 데이터
     public string name;
-    public int statHp, statStr, statInt, statDex;
-    public int gold, level, exp;
+    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 단순 데이터
     
     // 여러 DAO를 거쳐 클래스 형태로 로드되는 복합 데이터
     public Skill playerSkill;                                    // SkillDao.GetSkill(index)
@@ -76,10 +95,8 @@ public class PlayerInfo {
 
 // 최적화된 DTO - 인덱스만 포함하여 경량화
 public class PlayerRawInfo {
-    // 동일한 단순 데이터
     public string name;
-    public int statHp, statStr, statInt, statDex;
-    public int gold, level, exp;
+    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 동일한 단순 데이터
     
     // 클래스 대신 인덱스만 저장하여 I/O 최소화
     public int playerSkillIndex;
@@ -91,6 +108,28 @@ public class PlayerRawInfo {
     // ...
 }
 ```
+
+```csharp
+// 인덱스 기반 DTO
+public interface IIndexableDTO {
+    int Index { get; set; }
+}
+
+// UI 렌더링용 DTO
+public interface IRenderableData : IIndexableDTO {
+    enum ItemType { card, skill, equipment, starterPack, portrait, buff }
+    public ItemType datatype { get; set; }
+    public Illustration Illust { get; set; }
+}
+
+// 카드 인터페이스
+public interface ICard : IRenderableData, IRarity {
+    public ENUM_CARD_TYPE CardType { get; set; }
+}
+```
+
+> - [Data Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Class)
+> - [Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Interface)
 
 * #### Data Access Object (DAO)
 
@@ -138,6 +177,9 @@ public class CardDao : CollectionDao {
     public static string GetCardTypeText(ENUM_CARD_TYPE cardType) { ... }
 }
 ```
+
+> - [DAO Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
+
 ### 데이터베이스 작동 방식
 
 ---
@@ -247,16 +289,48 @@ public T GetSafeValue<T>(int colIndex) {
 
 ### 전투 시스템
 
-전투는 `BattleManager`를 통해 초기화되고 관리됩니다. 모든 전투 관련 로직과 오브젝트는 매니저를 통해 접근하며, 다형성 기반의 인터페이스 설계로 확장성을 확보했습니다.
+전투 시스템은 싱글톤 패턴의 `BattleManager`를 중심으로 설계되었습니다. 카드, 버프, 장비, 적 등 전투에 참여하는 모든 오브젝트는 다형성 기반의 인터페이스를 상속받아 캡슐화되어 있지만, 실제 효과 발동과 상호작용은 대부분 매니저를 통해 수행됩니다. 이는 오브젝트 간 직접 참조를 방지하고, 새로운 오브젝트 추가 시 기존 로직 수정 없이 확장할 수 있도록 설계한 것입니다.
 
-* #### 매니저
+전투 시작 시 플레이어 고유 시드값으로 랜덤 상태를 초기화하여, 동일한 행동 시퀀스가 항상 동일한 결과를 보장합니다. 게임을 껐다 켜도 같은 선택을 하면 같은 결과로 이어집니다. Enum 비트 연산을 활용한 복합 타겟팅 시스템으로 단일 메서드 호출로 여러 대상에게 효과를 적용하며, 옵저버 패턴을 통해 버프, 장비, 업적 등이 전투 이벤트를 구독하여 느슨한 결합을 유지합니다.
 
-    `BattleManager`는 싱글톤 패턴으로 구현된 핵심 매니저 클래스입니다. 전투 진행에 필요한 모든 서브 매니저와 UI 컴포넌트를 통합 관리합니다.
+아래는 전투 시스템의 핵심 로직을 담당하는 4개의 특징적인 매니저 클래스에 대한 설명입니다.
 
-    * **전투 진행 매니저**: 전투 사이클을 관리하는 `BattlePhaseManager`, 적 관리를 담당하는 `BattleEnemyManager`, 이벤트 처리를 담당하는 `BattleEventManager`, 카드 덱/핸드/묘지를 관리하는 `BattleCardManager`
+
+* #### BattleManager
+
+    전투 시스템의 핵심 싱글톤 매니저 클래스입니다. 전투 진행에 필요한 모든 서브 매니저와 UI 컴포넌트를 통합 관리합니다.
+
+    * **서브 매니저 통합**: `BattlePhaseManager`, `BattleEnemyManager`, `BattleEventManager`, `BattleCardManager` 등 모든 전투 관련 매니저를 소유
+    * **전투 상태 관리**: 전투 시작/종료 조건 확인, 승리/패배 처리
     * **UI 매니저**: 플레이어 상태 UI, 적 배치, 오브젝트 풀, 스킬 입력 시스템, 설명 팝업, 대화창, 전투 연출 등
-    * **백그라운드 데이터**: 저주 시스템, 전투 기록 아카이브, 통계 분석 (Unity Analytics 연동)
     * **업적 시스템 연동**: 전투 시작/종료 시 다양한 조건의 업적 달성 여부를 자동으로 체크
+
+* #### BattlePhaseManager
+
+    전투 페이즈 흐름을 제어하는 매니저 클래스입니다. 턴 시작/종료, 전투 시작/종료 등 페이즈별 등록된 델리게이트를 실행하고 콜렉터를 관리합니다.
+
+    * **페이즈 델리게이트 시스템**: `IBattlePhaseEffect` 인터페이스를 통해 버프, 장비, 패시브 등이 특정 페이즈에 동작을 등록
+    * **타겟-액션 조합**: `(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION)` 튜플 키로 등록된 동작 관리
+    * **일회용 페이즈 동작**: n턴 후 자동 실행 및 제거되는 `DisposablePhaseEffect` 지원
+    * **페이즈 콜렉터**: 특정 시점 사이에 발생한 이벤트를 수집하여 카운트 기반 로직 구현
+
+* #### BattleEnemyManager
+
+    전투 중 적 개체들의 생명주기와 행동을 총괄하는 매니저 클래스입니다. 적 생성/사망, 턴 진행, 타겟팅, UI 갱신 등을 담당합니다.
+
+    * **적 리스트 관리**: 최대 4마리까지의 적 오브젝트를 딕셔너리로 관리
+    * **패턴 기반 행동**: 적의 턴마다 `ProceedEnemyPattern`을 통해 순차적으로 행동 실행
+    * **동적 적 추가/제거**: 전투 중 적 소환, 사망, 교체 처리
+    * **타겟팅 시스템**: 플레이어 카드 사용 시 타겟 지정 UI 연동
+
+* #### BattleEventManager
+
+    전투 중 발생하는 이벤트 델리게이트를 관리하는 클래스입니다. 옵저버 패턴을 통해 전투 내 다양한 이벤트를 구독할 수 있습니다.
+
+    * **턴 이벤트**: `OnTurnStart`, `OnUseCard`, `OnDrawCard` 등
+    * **피해/회복 이벤트**: `OnTargetDamaged`, `OnTargetGainHp`, `OnTargetGainShield` 등
+    * **버프 이벤트**: `OnTargetGainBuff`, `OnTargetLoseBuff`
+    * **수치 수정 함수**: `DamageAddition`, `CostSet` 등 Func 델리게이트로 동적 수치 계산
 
 ```csharp
 public class BattleManager : MonoBehaviour, IDisposable {
@@ -269,6 +343,60 @@ public class BattleManager : MonoBehaviour, IDisposable {
     // ...
 }
 ```
+
+```csharp
+// BattleEnemyManager - 적 패턴 기반 턴 진행
+public void ProceedEnemyPattern(ENUM_BATTLE_PHASE_TARGET current) {
+    if (BattleManager.GetInstance().IsBattleEnd == true) return;
+    if (current > ENEMY3) {
+        BattleManager.GetInstance().battlePhaseManager.ProceedPhase(PLAYER, TURN_START_STAND_BY);
+        return;
+    }
+    var targetEnemy = GetEnemyObject(current);
+    if (targetEnemy == null) {
+        ProceedEnemyPattern((ENUM_BATTLE_PHASE_TARGET)((int)current << 1));  // 다음 적으로 이동
+        return;
+    }
+    StartCoroutine(ProceedEnemy(targetEnemy));
+}
+
+// 살아있는 적에게 특정 action 실행
+public void ProceedEnemyAction(ENUM_BATTLE_PHASE_TARGET enemyTargets, Action<BattleEnemyObject> action) {
+    for (int i = 0; i < BattleEnemyObjectList.Count; i++) {
+        var targetEnemy = BattleEnemyObjectList[i];
+        if (enemyTargets.HasFlag(targetEnemy.enemyPhaseTargetEnum)) {
+            action(targetEnemy);
+        }
+    }
+}
+```
+
+```csharp
+// BattleEventManager - 전투 이벤트 델리게이트
+public class BattleEventManager : MonoBehaviour {
+    // 턴/카드 이벤트
+    public Action OnTurnStart;
+    public Action<Card> OnUseCard = null;
+    public Action<Card> OnDrawCard = null;
+    
+    // 수치 수정 Func 델리게이트
+    public Func<IBattlePlayerCard, int> DamageAddition = null;
+    public Func<IBattlePlayerCard, int> CostSet = null;
+    
+    // 타겟 기반 이벤트
+    public Action<IBattleStatus, IBattleFactor, int> OnTargetDamaged = null;
+    public Action<IBattleStatus, IBattleFactor, int> OnTargetGainShield = null;
+    public Action<IBattleStatus, IBattleFactor, Buff, int> OnTargetGainBuff = null;
+    public Action<BattleEnemyObject> OnEnemyDead = null;
+}
+```
+
+> - [BattleManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleManager.cs)
+> - [BattlePhaseManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattlePhaseManager.cs)
+> - [BattleEnemyManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEnemyManager.cs)
+> - [BattleEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
+
+
 
 * #### 스테이터스 시스템
 
@@ -309,9 +437,20 @@ public class BattleStatus : IBattleStatusAction {
 }
 ```
 
-* #### 오브젝트
+> - [IBattleStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatus.cs)
+> - [IBattleStatusAttributes.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAttributes.cs)
+> - [IBattleStatusAction.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAction.cs)
+> - [BattleStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleStatus.cs)
+> - [BattlePlayerStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattlePlayerStatus.cs)
+> - [BattleEnemyStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
+> - [BattlePlayerObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
+> - [BattleEnemyObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
 
-    전투에서 사용되는 모든 오브젝트는 공통 인터페이스를 상속받아 다형성 기반으로 동작합니다. 효과 처리는 `BattleManager`를 통해 일관되게 수행됩니다.
+* #### 전투 로직
+
+    전투에서 사용되는 카드, 버프, 장비, 적 등의 오브젝트는 UI에 표시되는 데이터를 가진 상위 객체이며, 각 오브젝트는 실제 기능을 수행하는 **전투 로직 클래스**를 변수로 소유합니다. 이 클래스들은 공통 인터페이스를 상속받아 다형성 기반으로 동작하며, 효과 처리는 `BattleManager`를 통해 일관되게 수행됩니다.
+
+    전투 로직 클래스는 DB에 저장된 클래스명(문자열)을 키로 사용하여, DAO에서 `Activator.CreateInstance`를 통해 런타임에 동적으로 인스턴스화됩니다. 이를 통해 새로운 카드나 버프를 추가할 때 코드 수정 없이 DB 데이터만 추가하면 됩니다.
 
     * **카드 (Card)**: 플레이어 카드와 적 카드 모두 `IBattleFactor`를 상속받아 동일한 효과 처리 파이프라인을 사용합니다.
         * `IBattlePlayerCard`: 세력, 코스트, 수치 데이터, 사용 후 목적지, 연계 장비 등
@@ -330,6 +469,12 @@ public class BattleStatus : IBattleStatusAction {
         * 패턴 기반 행동 시스템 (공격, 방어, 버프 등)
         * 다음 행동 타입 UI 갱신
         * 적별 고유 사운드 에셋 관리
+
+```csharp
+// DAO에서 클래스명으로 동적 인스턴스 생성
+card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(Type.GetType(it.GetSafeValue<string>(0)));
+enemy.enemyPattern = (IBattleEnemy)Activator.CreateInstance(Type.GetType(it.GetSafeValue<string>(1)));
+```
 
 
 ```csharp
@@ -363,3 +508,12 @@ public interface IBattleEnemy {
     void UpdateEnemyActionUI();
 }
 ```
+
+> - [Card Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Card)
+> - [Buff Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Buff)
+> - [Equipment Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Equipment)
+> - [Enemy Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Enemy)
+> - [Card Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Card)
+> - [Buff Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Buff)
+> - [Equipment Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Equipment)
+> - [Enemy Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Enemy)
