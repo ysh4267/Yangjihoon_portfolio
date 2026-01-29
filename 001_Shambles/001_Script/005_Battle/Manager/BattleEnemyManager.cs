@@ -12,25 +12,27 @@ using static ENUM_BATTLE_PHASE_ACTION;
 /// 적 생성/사망, 턴 진행, 타겟팅, UI 갱신 등을 담당
 /// </summary>
 public class BattleEnemyManager : MonoBehaviour {
-	[SerializeField] BattleEnemyObject[] enemyPrefabs;
-	SortedSet<BattleEnemyObject> enemyObjects = new SortedSet<BattleEnemyObject>(new Comparer()); // 우선순위 큐를 대신하기 위해 SortedSet 사용
-	SortedSet<BattleEnemyObject> deadEnemyObjects = new SortedSet<BattleEnemyObject>(new Comparer());
+	[SerializeField] BattleEnemyObject[] enemyPrefabs; // 적 생성을 위한 프리팹 풀
+	SortedSet<BattleEnemyObject> enemyObjects = new SortedSet<BattleEnemyObject>(new Comparer()); // 현재 활성화된 적들의 리스트 (우선순위 큐 역할)
+	SortedSet<BattleEnemyObject> deadEnemyObjects = new SortedSet<BattleEnemyObject>(new Comparer()); // 비활성화된적들의 풀
 
-	[HideInInspector] public List<BattleEnemyObject> BattleEnemyObjectList => enemyObjects.ToList();
-	public int EnemyCount => enemyObjects.Count;
+	[HideInInspector] public List<BattleEnemyObject> BattleEnemyObjectList => enemyObjects.ToList(); // 외부 접근용 적 리스트
+	public int EnemyCount => enemyObjects.Count; // 현재 살아있는 적 개체 수
 
 	//for enemy turn active coroutine
-	[HideInInspector] public bool isEnemyPlaying = false;
+	[HideInInspector] public bool isEnemyPlaying = false; // 적의 행동이 진행 중인지 여부
 	WaitWhile waitWhileEnemyPlaying;
-	WaitForSeconds waitForSeconds5000 = new WaitForSeconds(5f);
+	WaitForSeconds waitForSeconds5000 = new WaitForSeconds(5f); //애니메이션 오류 방지용 타이머
 	WaitForSeconds waitForSeconds1000 = new WaitForSeconds(1f);
 
+	// 순서를 정렬하기 위한 비교자
 	private class Comparer : IComparer<BattleEnemyObject> {
 		public int Compare(BattleEnemyObject e1, BattleEnemyObject e2) {
 			return (int)e1.enemyPhaseTargetEnum - (int)e2.enemyPhaseTargetEnum;
 		}
 	}
 
+	// 시작시 적 데이터 리스트를 받아 전투 시작 시 초기 적들을 생성하고 배치
 	public void InitializeEnemyList(in List<Enemy> enemyDataList) {
 		for (int i = 0; i < enemyPrefabs.Length; i++) {
 			deadEnemyObjects.Add(enemyPrefabs[i]);
@@ -42,6 +44,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		waitWhileEnemyPlaying = new WaitWhile(() => isEnemyPlaying);
 	}
 
+	// 새로운 적을 전장에 추가
 	public bool AddEnemy(Enemy enemyData) {
 		if (deadEnemyObjects.Count <= 0) return false;
 
@@ -77,6 +80,8 @@ public class BattleEnemyManager : MonoBehaviour {
 		return true;
 	}
 
+
+	// 디버그용: 특정 인덱스의 적을 강제로 추가
 	public void DebugAddEnemy(int enemyIndex) {
 		if (EnemyCount > 2) {
 			DebugRemoveEnemy();
@@ -98,6 +103,7 @@ public class BattleEnemyManager : MonoBehaviour {
 			AddEnemy(EnemyDao.GetEnemy(e3));
 	}
 
+	// 디버그용: 전장에 있는 가장 앞쪽 적을 강제로 제거
 	public void DebugRemoveEnemy() {
 		var targetEnemy = enemyObjects.Min();
 		targetEnemy.enemyStatus.BuffCounter.ClearBuffs();
@@ -110,6 +116,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		CheckHidingEnemies();
 	}
 
+	// 적들의 턴을 순차적으로 진행
 	public void ProceedEnemyPattern(ENUM_BATTLE_PHASE_TARGET current) {
 		if (BattleManager.GetInstance().IsBattleEnd == true) return;
 		if (current > ENEMY3) {
@@ -147,14 +154,15 @@ public class BattleEnemyManager : MonoBehaviour {
 			currentEnemy.UpdateUI();
 			ProceedEnemyPattern((ENUM_BATTLE_PHASE_TARGET)((int)currentEnemy.enemyPhaseTargetEnum << 1));
 		}
-
+		
+		//의도치 않은 이슈로 게임이 멈추는걸 방지하기 위한 타이머
 		IEnumerator ForceTurnEnd() {
 			yield return waitForSeconds5000;
 			Camera.main.SetCameraBack();
 		}
 	}
 
-	//살아있는 적에게 특정 action 을 실행
+	// 살아있는 적 중에서 타겟에 해당하는 적들에게 특정 액션을 일괄 실행
 	public void ProceedEnemyAction(ENUM_BATTLE_PHASE_TARGET enemyTargets, Action<BattleEnemyObject> action) {
 		for (int i = 0; i < BattleEnemyObjectList.Count; i++) {
 			var targetEnemy = BattleEnemyObjectList[i];
@@ -166,6 +174,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		}
 	}
 
+	// 적 사망 처리 시 딜레이를 주어 부활 등의 변수를 체크
 	public async void KillEnemyDelay(BattleEnemyObject enemyObject) {
 		enemyObject.GetComponent<BoxCollider>().enabled = false;
 		await Task.Delay(100); // 사망 처리 강제 지연. 독 데미지로 인해 체력이 0보다 작아진 직후 체력을 회복하는 등 되살아날 수 있는 판정에 대해 예외처리.
@@ -177,6 +186,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		KillEnemy(enemyObject);
 	}
 
+	// 적 사망 확정 처리
 	public async void KillEnemy(BattleEnemyObject enemyObject) {
 		#region 적 처치 업적
 		// 예시업적_015 : 현실 난이도에서 적 다수 처치
@@ -225,6 +235,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		CheckHidingEnemies();
 	}
 
+	// 필드 위의 적 개체를 다른 적으로 교체
 	public void ChangeEnemy(BattleEnemyObject fromObject, int toIndex) {
 		var toObject = EnemyDao.GetEnemy(toIndex);
 		Destroy(fromObject.enemySprite);
@@ -232,6 +243,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		fromObject.Initialize(toObject);
 	}
 
+	// 카드를 드래그 하는 등 타겟팅 상태일 때 적에게 타겟팅 효과 표시
 	public void SetEnemiesTargeted(ENUM_BATTLE_PHASE_TARGET? target, IBattleFactor factor, bool isTargeting, BattleDamage battleDamage = default) {
 		if (target == null) return;
 
@@ -241,6 +253,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		}
 	}
 
+	// 특정 타겟 Enum에 해당하는 적 객체 반환
 	public BattleEnemyObject GetEnemyObject(ENUM_BATTLE_PHASE_TARGET target) {
 		foreach (var enemy in enemyObjects) {
 			if (target.Equals(enemy.enemyPhaseTargetEnum))
@@ -250,6 +263,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		return null;
 	}
 
+	// 특정 데이터 인덱스를 가진 적 객체 반환
 	public BattleEnemyObject GetEnemyObject(int enemyIndex) {
 		foreach (var enemy in enemyObjects) {
 			if (enemyIndex == enemy.enemyData.Index)
@@ -259,6 +273,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		return null;
 	}
 
+	// 특정 인덱스를 가진 적들을 찾아 합쳐진 BattleStatus 반환
 	public BattleStatus GetEnemies(params int[] enemyIndices) {
 		ENUM_BATTLE_PHASE_TARGET enemiesEnum = 0;
 
@@ -274,6 +289,7 @@ public class BattleEnemyManager : MonoBehaviour {
 		return BattleManager.GetInstance().GetBattleStatus(enemiesEnum);
 	}
 
+	// 특정 인덱스를 제외한 나머지 적들을 찾아 합쳐진 BattleStatus 반환
 	public BattleStatus GetEnemiesExcept(params int[] enemyIndices) {
 		ENUM_BATTLE_PHASE_TARGET enemiesEnum = ALL_ENEMIES;
 
@@ -303,6 +319,7 @@ public class BattleEnemyManager : MonoBehaviour {
 			});
 	}
 
+	// 적들의 다음 행동 UI를 갱신
 	public void UpdateEnemyActionUI(ENUM_BATTLE_PHASE_TARGET target = ENUM_BATTLE_PHASE_TARGET.ALL_ENEMIES) {
 		ProceedEnemyAction(target, (enemy) => {
 			enemy.enemyScript.UpdateEnemyActionUI();

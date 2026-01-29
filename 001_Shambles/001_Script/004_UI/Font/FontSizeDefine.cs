@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 텍스트 크기 옵션에 따른 폰트 사이즈 수치를 정의하는 클래스
+/// </summary>
 public class FontSizeDefine
 {   
     static readonly FontSize smallFont = new FontSize((int)ENUM_TEXT_SIZE.SMALL);
@@ -23,6 +26,9 @@ public class FontSizeDefine
         }
     }
 
+	/// <summary>
+	/// UI 요소별 폰트 사이즈 구조체
+	/// </summary>
     public struct FontSize {
         public float storyFontSize;
         public float rewardFontSize;

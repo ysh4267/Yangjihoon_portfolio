@@ -11,9 +11,9 @@ using static ENUM_BATTLE_PHASE_ACTION;
 /// 턴 시작/종료, 전투 시작/종료 등 페이즈별 이펙트 실행 및 콜렉터 관리
 /// </summary>
 public class BattlePhaseManager : MonoBehaviour {
-	Dictionary<(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION), List<IBattlePhaseEffect>> phaseEffectList;
-	Dictionary<(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION), List<IBattlePhaseEffect>> removePhaseEffectList;
-	List<IBattlePhaseCollector> phaseCollectors;
+	Dictionary<(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION), List<IBattlePhaseEffect>> phaseEffectList; // 페이즈별 실행될 델리게이트 목록
+	Dictionary<(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION), List<IBattlePhaseEffect>> removePhaseEffectList; // 제거 대기 중인 델리게이트 목록
+	List<IBattlePhaseCollector> phaseCollectors; // 페이즈 이벤트를 수집하는 콜렉터 리스트
 
 	void Awake() {
 		phaseEffectList = new Dictionary<(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION), List<IBattlePhaseEffect>>();
@@ -28,10 +28,12 @@ public class BattlePhaseManager : MonoBehaviour {
 		}
 	}
 
+	// 특정 페이즈 델리게이트가 유효한지 확인
 	public bool IsPhaseEffectAlive(IBattlePhaseEffect effect, ENUM_BATTLE_PHASE_TARGET target, ENUM_BATTLE_PHASE_ACTION action) {
 		return phaseEffectList[(target, action)].Contains(effect);
 	}
 
+	// 제거 대기 목록에 있는 델리게이트들을 실제 목록에서 제거
 	private void ProceedRemove(in ENUM_BATTLE_PHASE_TARGET target, ENUM_BATTLE_PHASE_ACTION phaseEnumAction) {
 		//제거목록 제거
 		for (int i = 0; i < removePhaseEffectList[(target, phaseEnumAction)].Count; i++) {
@@ -40,6 +42,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		removePhaseEffectList[(target, phaseEnumAction)].Clear();
 	}
 
+	// 지정된 타겟과 액션에 대한 페이즈 진행
 	public void ProceedPhase(in ENUM_BATTLE_PHASE_TARGET phaseEnumTargets, ENUM_BATTLE_PHASE_ACTION phaseEnumAction) {
 
 		if (BattleManager.GetInstance().IsBattleEnd == true) {
@@ -89,6 +92,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		});
 	}
 
+	// 타겟 Enum 플래그를 개별 타겟으로 분해하여 액션 실행
 	private void ProceedTargetAction(ENUM_BATTLE_PHASE_TARGET phaseEnumTargets, Action<ENUM_BATTLE_PHASE_TARGET> action) {
 		foreach (ENUM_BATTLE_PHASE_TARGET target in Enum.GetValues(typeof(ENUM_BATTLE_PHASE_TARGET))) {
 			if (phaseEnumTargets.HasFlag(target)) {
@@ -97,6 +101,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		}
 	}
 
+	// 새로운 페이즈 델리게이트 등록
 	public void AddPhaseEffect(IBattlePhaseEffect battlePhaseEffect, in ENUM_BATTLE_PHASE_TARGET battleTargets, params ENUM_BATTLE_PHASE_ACTION[] battlePhaseActionList) {
 		if (battlePhaseActionList.Length == 0) {
 			Debug.LogError("Error : AddPhaseEvent has no Action");
@@ -110,6 +115,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		});
 	}
 
+	// 페이즈 델리게이트 제거 요청
 	public void RemovePhaseEffectRequest(IBattlePhaseEffect battlePhaseEffect, in ENUM_BATTLE_PHASE_TARGET battleTargets, params ENUM_BATTLE_PHASE_ACTION[] battlePhaseActionList) {
 		if (battlePhaseActionList.Length == 0) {
 			Debug.LogError("Error : RemovePhaseEvent has no Action");
@@ -124,6 +130,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		});
 	}
 
+	// 일회성 페이즈 델리게이트 생성 및 등록
 	public IBattlePhaseEffect AddDisposablePhaseEffect(Action effectMethod, ENUM_BATTLE_PHASE_TARGET battleTargets, ENUM_BATTLE_PHASE_ACTION battlePhaseAction, int count = 1) {
 		// n턴 후 페이즈 효과를 실행하는 일회용 페이즈 효과를 위한 메서드. 기본값: 1턴 후 제거됨.
 		DisposablePhaseEffect phaseEffect = new DisposablePhaseEffect();
@@ -132,6 +139,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		return phaseEffect;
 	}
 
+	// 다중 액션에 대한 일회성 페이즈 델리게이트 생성 및 등록
 	public IBattlePhaseEffect AddDisposablePhaseEffect(Action effectMethod, ENUM_BATTLE_PHASE_TARGET battleTargets, params ENUM_BATTLE_PHASE_ACTION[] battlePhaseActionList) {
 		DisposablePhaseEffect phaseEffect = new DisposablePhaseEffect();
 		phaseEffect.InitializeEffectMethod(effectMethod, () => RemovePhaseEffectRequest(phaseEffect, battleTargets, battlePhaseActionList), 1);
@@ -169,6 +177,7 @@ public class BattlePhaseManager : MonoBehaviour {
 		}, target, endActions);
 	}
 
+	// 페이즈 콜렉터 제거
 	public void RemovePhaseCollector(IBattlePhaseCollector collector) {
 		phaseCollectors.Remove(collector);
 	}

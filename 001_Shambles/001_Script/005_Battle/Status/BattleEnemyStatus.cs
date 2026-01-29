@@ -287,7 +287,7 @@ public class BattleEnemyStatus : IBattleStatus {
             buffScript.InitializeBuff(this, buff, count, _params);
             buffScript.ActivateBuffEffect();
             #region 버프 업적 처리
-            //눈먼자들의 도시: 모든 적과 자신에게 실명을 부여하십시오.
+            //모든 적과 자신에게 실명을 부여하십시오.
             int BlindObjectCount = 0;
             foreach (var Target in BattleManager.GetInstance().GetBattleStatus(ALL).TargestList) {
                 if (Target.BuffCounter.HasEnoughBuffCount(ENUM_BUFF_INDEX.EXAMPLE_BUFF_006, 1))

@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
+/// <summary>
+/// DOTween을 사용한 닫기 애니메이션을 지원하는 팝업의 기본 클래스
+/// </summary>
 public class CloseAnimationPopup : MonoBehaviour, IPopup {
     [SerializeField] protected GameObject closePopupObject = null;
     [SerializeField] protected Image backgoundButtonObject = null;
@@ -24,6 +27,7 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
         if (backgoundButtonObject != null) originalBackgroundAlpha = backgoundButtonObject.color.a;
     }
 
+	// 팝업 닫기 요청 처리
     public virtual void ClosePopupRequest() {
         if (isAnimated == false) {
             SoundManager.GetInstance().PlayEffectSound(ENUM_EFFECT_SOUND.BUTTON_POPUP_CLOSE);
@@ -61,14 +65,17 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 		CloseRequestCalled?.Invoke();
 	}
 
+	// 실제 팝업 오브젝트 비활성화
     protected virtual void ClosePopup() {
         gameObject.SetActive(false);
     }
 
+	// 활성화 시 매니저 스택에 등록
     protected virtual void OnEnable() {
         GameManager.GetInstance()?.PushPopup(this);
     }
 
+	// 비활성화 시 매니저 스택에서 제거
     protected virtual void OnDisable() {
         GameManager.GetInstance()?.PopPopup();
     }

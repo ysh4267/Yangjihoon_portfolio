@@ -1,21 +1,27 @@
-# 샴블즈 (Shambles) 
+# 샴블즈 (Shambles)
+
 *   [**Steam (PC)**](https://store.steampowered.com/app/2289630/_/?l=koreana)
 *   [**Google Play (Android)**](https://play.google.com/store/apps/details?id=com.gravity.shambles.aos)
 *   [**App Store (iOS)**](https://apps.apple.com/kr/app/%EC%83%B4%EB%B8%94%EC%A6%88-%EC%A2%85%EB%A7%90%EC%9D%98-%ED%9B%84%EC%86%90%EB%93%A4/id6740197039)
 
+
 ## 1. 게임 개요
+
 **"당신이 알던 세상은 이미 멸망했다."**
 
 샴블즈는 대전쟁으로 인해 문명이 멸망하고 500년이 흐른 세계를 배경으로 하는 **텍스트 RPG, 덱빌딩, 로그라이크**가 결합된 게임입니다.
 
-*   **장르**: 포스트 아포칼립스 덱빌딩 로그라이크
+*   **장르**: 포스트 아포칼립스 덱빌딩 로그라이크 텍스트 RPG
 *   **주요 특징**:
     *   텍스트 애니메이션을 이용한 독특한 텍스트 RPG
     *   선택에 따라 달라지는 수많은 분기점과 멀티 엔딩
     *   전략적인 턴제 카드 전투 시스템
 
+
 ## 2. 사용된 기술 스택
+
 Unity, C#, SQLite
+
 
 ## 3. 기술적 특징
 
@@ -131,6 +137,7 @@ public interface ICard : IRenderableData, IRarity {
 > - [Data Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Class)
 > - [Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Interface)
 
+
 * #### Data Access Object (DAO)
 
     DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직과 데이터 접근을 분리합니다. 각 데이터 모델별로 전용 DAO 클래스를 구성하여 관련 쿼리와 파싱 로직을 집중 관리합니다. 특히 C#의 Boxing/Unboxing 과정에서 발생하는 성능 부하를 최소화하기 위해, 데이터 변환 로직을 쿼리 단계에서 처리하도록 DAO를 전문화하여 런타임 오버헤드를 줄였습니다.
@@ -179,6 +186,7 @@ public class CardDao : CollectionDao {
 ```
 
 > - [DAO Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
+
 
 ### 데이터베이스 작동 방식
 
@@ -285,7 +293,9 @@ public T GetSafeValue<T>(int colIndex) {
     return default;
 }
 ```
+
 ---
+
 
 ### 전투 시스템
 
@@ -397,7 +407,6 @@ public class BattleEventManager : MonoBehaviour {
 > - [BattleEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
 
 
-
 * #### 스테이터스 시스템
 
     전투 중 동적으로 변하는 수치들을 관리하는 시스템입니다. 핵심 인터페이스와 클래스를 통해 플레이어와 적의 상태를 일관되게 처리합니다.
@@ -446,6 +455,7 @@ public class BattleStatus : IBattleStatusAction {
 > - [BattlePlayerObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
 > - [BattleEnemyObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
 
+
 * #### 전투 로직
 
     전투에서 사용되는 카드, 버프, 장비, 적 등의 오브젝트는 UI에 표시되는 데이터를 가진 상위 객체이며, 각 오브젝트는 실제 기능을 수행하는 **전투 로직 클래스**를 변수로 소유합니다. 이 클래스들은 공통 인터페이스를 상속받아 다형성 기반으로 동작하며, 효과 처리는 `BattleManager`를 통해 일관되게 수행됩니다.
@@ -456,18 +466,15 @@ public class BattleStatus : IBattleStatusAction {
         * `IBattlePlayerCard`: 세력, 코스트, 수치 데이터, 사용 후 목적지, 연계 장비 등
         * `IBattleEnemyCard`: 소유자/타겟 상태, 카드 초기화 및 발동 메서드
         * 적의 공격과 스킬도 동일한 카드 시스템을 기반으로 동작하여 로직 재사용성 극대화
-
     * **버프 (Buff)**: `IBattleBuff` 인터페이스를 통해 모든 버프/디버프를 일관되게 관리합니다.
         * 버프/디버프 유형 구분 (`ENUM_BUFF_TYPE`)
         * 카운터 감소 방식 지정 (`ENUM_BUFF_COUNTER_TYPE`: 턴 종료, 피격 시, 행동 시 등)
         * 활성화/종료 시점 콜백 메서드 제공
         * `IBattleBuffActive`, `IBattleBuffPassive`로 능동/수동 버프 분리
-
-    * **장비 (Equipment)**: `IBattleEquipment` 인터페이스를 통해 장비 효과를 관리합니다. 장비 효과는 플레이어 상태에 직접 영향을 미치며, `BattleDynamicValues`의 장비 플래그를 통해 특수 효과를 활성화합니다.
-
-    * **적 (Enemy)**: `IBattleEnemy` 인터페이스를 통해 적의 행동 패턴을 관리합니다. 패턴 인덱스 기반으로 다음 행동을 결정하고, UI에 미리보기를 표시합니다.
-        * 패턴 기반 행동 시스템 (공격, 방어, 버프 등)
-        * 다음 행동 타입 UI 갱신
+    * **장비 (Equipment)**: `IBattleEquipment` 인터페이스를 통해 장비 효과를 관리합니다. 장비 효과 또한 내부적으로는 `Buff` 형태로 생성되어 처리되므로, 적/플레이어의 행동과 유사한 메커니즘을 공유합니다.
+    * **적 (Enemy)**: `IBattleEnemy`를 통해 행동 패턴을 결정하며, 공격/방어/버프 등의 모든 행위는 `IBattleEnemyCard`를 사용하여 플레이어가 카드를 사용하는 것과 완벽히 동일한 메커니즘으로 처리됩니다. 이를 통해 플레이어와 적의 로직이 일관성 있게 관리되며 자주 반복되는 효과의 구현이 간단해집니다.
+        * 패턴 기반 행동 시스템 (공격, 방어, 버프 등) -> `EnemyCard` 사용
+        * 플레이어 카드 로직과 동일한 파이프라인 공유
         * 적별 고유 사운드 에셋 관리
 
 ```csharp
@@ -476,44 +483,140 @@ card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(Type.GetType
 enemy.enemyPattern = (IBattleEnemy)Activator.CreateInstance(Type.GetType(it.GetSafeValue<string>(1)));
 ```
 
-
 ```csharp
-// 적 카드 인터페이스 - 동일한 카드 시스템 기반
-public interface IBattleEnemyCard : IBattleFactor {
-    IBattleStatus OwnerStatus { get; set; }
-    void ProceedCardAction(BattleStatus cardTargetStatus, int value);
+// 모든 전투 요인의 최상위 마커 인터페이스. 데미지 계산 및 효과 적용의 주체(Causer)로 추적됨.
+public interface IBattleFactor { }
+
+// 플레이어 카드와 적 스킬의 공통 인터페이스. 동일한 파이프라인에서 처리됨.
+public interface IBattleCard : IBattleFactor {
+    IBattleStatus OwnerStatus { get; set; } // 카드의 소유자 상태
+    void ProceedCardAction(IBattleStatus cardTargetStatus = null); // 카드 효과 실행
 }
 
-// 버프 인터페이스
+// 플레이어 카드 인터페이스
+public interface IBattlePlayerCard : IBattleCard { }
+
+// 적 카드 인터페이스 (불필요한 오버헤드 제거 및 최적화 목적)
+public interface IBattleEnemyCard : IBattleCard { }
+
+// 버프 인터페이스. 턴/행동 기반으로 카운팅되며 효과를 발동함.
 public interface IBattleBuff : IBattleFactor {
-    ENUM_BUFF_TYPE EffectType { get; }
-    ENUM_BUFF_COUNTER_TYPE CounterType { get; }
-    int ContinuousCount { get; set; }
-    void ActivateBuffEffect();
-    void EndBuffEffect();
-}
-
-// 장비 인터페이스
-public interface IBattleEquipment {
-    Equipment ThisEquipment { get; set; }
-    void ActivateEquipmentEffect(BattlePlayerStatus playerStatus);
-}
-
-// 적 인터페이스
-public interface IBattleEnemy {
-    int PatternIndex { get; set; }
-    ENUM_CARD_TYPE NextPatternTypeEnum { get; set; }
-    void InitializeEnemyAction(BattleEnemyObject enemyObject);
-    void ProceedEnemyAction();
-    void UpdateEnemyActionUI();
+    void ActivateBuffEffect(); // 버프 효과 발동
 }
 ```
 
-> - [Card Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Card)
-> - [Buff Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Buff)
-> - [Equipment Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Equipment)
-> - [Enemy Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Interface/Enemy)
-> - [Card Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Card)
-> - [Buff Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Buff)
-> - [Equipment Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Equipment)
-> - [Enemy Scripts](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Enemy)
+> - [Battle Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/005_Battle/Interface)
+> - [Card.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/PlayerCard/ExamplePlayerCard.cs)
+> - [Skill.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/SkillCard/ExampleSkillCard.cs)
+> - [Buff.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
+> - [Equipment.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Equipment/ExampleEquipment.cs)
+> - [Enemy.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Enemy/ExampleEnemy.cs)
+> - [EnemyCards](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Card/EnemyCard)
+
+
+---
+
+
+### UI
+
+다양한 플랫폼과 해상도 환경에 대응하기 위해, 기기별 UI 프리셋을 런타임에 적용하도록 구현했습니다. 반복적인 UI 작업을 자동화하여 개발 효율과 유지보수성을 확보했습니다.
+
+
+* #### 폰트 관리
+
+    * **프리셋 기반 자동 조정**: `TextMeshPro`를 기반으로 언어와 플랫폼별 텍스트 크기와 폰트 스타일을 관리하는 프리셋 에디터를 사용합니다.
+    * **환경 대응**: 각 텍스트 오브젝트가 자신의 프리셋 타입을 명시하여, 실행 환경(모바일/PC, 한국어/영어 등)에 맞춰 자동으로 최적의 표시 상태로 조정되는 구조입니다.
+
+> **GetFontPresetData**
+>
+> 현재 설정된 언어에 맞는 폰트 프리셋 데이터를 반환합니다. 인덱스 범위를 초과하는 요청이 들어올 경우 기본값(마지막 프리셋)을 반환하여 런타임 에러를 방지합니다.
+
+```csharp
+public static FontPresetData GetFontPresetData {
+    get {
+        if ((int)SettingManager.CurrentLanguage >= FontPreset.Length) {
+            // 인덱스 초과 시 기본값 반환
+            FontPreset = new FontPresetData[4] { new FontPresetData(0), new FontPresetData(1), new FontPresetData(2), new FontPresetData(3) };
+            return FontPreset[FontPreset.Length - 1];
+        }
+        return FontPreset[(int)SettingManager.CurrentLanguage];
+    }
+}
+```
+
+> **CurrentFontSize**
+>
+> 사용자의 텍스트 크기 설정(Small, Medium, Large)을 확인하여, 그에 대응하는 미리 정의된 폰트 사이즈 객체를 반환합니다.
+
+```csharp
+public static FontSize CurrentFontSize {
+    get {
+        switch (SettingManager.GetSettingData().textSize) {
+            case ENUM_TEXT_SIZE.SMALL: return smallFont;
+            case ENUM_TEXT_SIZE.MEDIUM: return mediumFont;
+            case ENUM_TEXT_SIZE.LARGE: return largeFont;
+            default: return mediumFont;
+        }
+    }
+}
+```
+
+> - [FontPresetDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/FontPresetDefine.cs)
+> - [FontSizeDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/FontSizeDefine.cs)
+
+
+* #### 텍스트 시스템
+
+    * **JSON-Enum 1:1 매칭**: 모든 게임 내 텍스트 데이터를 JSON 파일로 관리하며, 코드 내 Enum과 1:1로 매칭되어 유지보수성을 확보합니다.
+    * **자동화된 다국어 처리**: 언어별 JSON 데이터만 변경하면 즉시 게임에 반영되며, 특정 언어 항목 누락 시 기본 언어 값으로 대체되는 페일세이프(Fail-safe) 기능을 지원합니다.
+    * **오류 방지**: 키가 존재하지 않는 경우에도 자동으로 빈 문자열을 할당하여 런타임 에러를 방지합니다.
+
+> **TextDefine**
+>
+> 현재 언어 설정에 맞는 텍스트 데이터를 반환합니다. 데이터가 메모리에 없는 경우 실시간으로 로드하여 반환하는 지연 로딩(Lazy Loading) 방식을 사용합니다.
+
+```csharp
+public static TextDefineString Current {
+    get {
+        if (!DefineString.TryGetValue(SettingManager.CurrentLanguage, out var defineString)) {
+            defineString = new TextDefineString(SettingManager.CurrentLanguage);
+            DefineString.Add(SettingManager.CurrentLanguage, defineString);
+        }
+        return DefineString[SettingManager.CurrentLanguage];
+    }
+}
+```
+
+> **TextDefineString**
+>
+> 기본 언어 데이터를 먼저 로드한 뒤 선택된 언어 데이터를 덮어씌웁니다. 특정 키가 번역본에 누락되었더라도 기본 언어 값이 유지되어 텍스트가 비어 보이는 현상을 방지합니다.
+
+```csharp
+public TextDefineString(ENUM_LANGUAGE languageEnum) {
+    // 기본 언어(한국어)를 먼저 로드한 뒤, 선택된 언어 데이터로 덮어쓰는 방식을 사용합니다.
+    var baseLanguage = ENUM_LANGUAGE.ko_KR;
+    JsonDataManager.ReadLanguageData<TextDefineStringData>(baseLanguage, out var baseTextData);
+    textData = baseTextData.stringData;
+    listTextData = baseTextData.listStringData;
+
+    JsonDataManager.ReadLanguageData<TextDefineStringData>(languageEnum, out var overrideTextData);
+
+    // 데이터 병합 (Override)
+    foreach (var item in overrideTextData.stringData) {
+        textData[item.Key] = item.Value;
+    }
+}
+```
+
+> - [TextDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefine.cs)
+> - [TextDefineString.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineString.cs)
+> - [TextDefineStringData.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineStringData.cs)
+
+
+* #### 팝업 시스템
+
+    * **인터페이스 통합 제어**: 모든 팝업 객체가 `IPopup` 인터페이스를 공유하여 통일된 방식으로 제어됩니다.
+    * **표준화된 시퀀스**: 팝업 종료 시 `IPopupRequest`를 통해 요청이 처리되며, 모든 팝업이 지정된 애니메이션 시퀀스를 공유하여 일관된 사용자 경험과 개발 편의성을 제공합니다.
+
+> - [Font Definitions](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/004_UI/Font)
+> - [Popup System](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/004_UI/Popup)
