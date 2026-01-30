@@ -1,11 +1,11 @@
 # 샴블즈 (Shambles)
 
-*   [**Steam (PC)**](https://store.steampowered.com/app/2289630/_/?l=koreana)
-*   [**Google Play (Android)**](https://play.google.com/store/apps/details?id=com.gravity.shambles.aos)
-*   [**App Store (iOS)**](https://apps.apple.com/kr/app/%EC%83%B4%EB%B8%94%EC%A6%88-%EC%A2%85%EB%A7%90%EC%9D%98-%ED%9B%84%EC%86%90%EB%93%A4/id6740197039)
+<a href="https://store.steampowered.com/app/2289630/_/?l=koreana"><img src="https://cdn.simpleicons.org/steam/171A21" height="60" alt="Steam"></a><sub>(Steam)</sub> &nbsp; &nbsp; &nbsp;
+<a href="https://play.google.com/store/apps/details?id=com.gravity.shambles.aos"><img src="https://cdn.simpleicons.org/googleplay/41E0FD" height="60" alt="Google Play"></a><sub>(Google Play)</sub> &nbsp; &nbsp; &nbsp;
+<a href="https://apps.apple.com/kr/app/%EC%83%B4%EB%B8%94%EC%A6%88-%EC%A2%85%EB%A7%90%EC%9D%98-%ED%9B%84%EC%86%90%EB%93%A4/id6740197039"><img src="https://cdn.simpleicons.org/appstore/0066CC" height="60" alt="App Store"></a><sub>(App Store)</sub>
 
 
-## 1. 게임 개요
+## 게임 개요
 
 포스트 아포칼립스 세계관을 배경으로 한 2D 텍스트 RPG, 덱빌딩, 로그라이크 게임입니다.
 
@@ -15,13 +15,37 @@
 *   **참여 인원**: 기획 2명, 아트 4명, 프로그래밍 3명
 *   **역할**: 리드 프로그래머
 
+## 사용된 기술 스택
 
-## 2. 사용된 기술 스택
+[![Unity](https://img.shields.io/badge/Unity-000000?logo=unity&logoColor=white&labelColor=555555)](https://unity.com/) [![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)](https://dotnet.microsoft.com/ko-kr/languages/csharp) [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white&labelColor=555555)](https://dotnet.microsoft.com/) [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white&labelColor=555555)](https://www.sqlite.org/) [![Amazon S3](https://img.shields.io/badge/Amazon_S3-FF9900?logo=amazons3&logoColor=white)](https://aws.amazon.com/s3/)
 
-Unity, C#, SQLite
+[![Visual Studio](https://img.shields.io/badge/Visual_Studio-5C2D91?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/) [![Visual Studio Code](https://img.shields.io/badge/Visual_Studio_Code-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 
 
-## 3. 기술적 특징
+## 기술적 특징
+
+* [데이터베이스](#데이터베이스)
+    * [DataReader](#datareader)
+    * [Data Transfer Object (DTO)](#data-transfer-object-dto)
+    * [Data Access Object (DAO)](#data-access-object-dao)
+    * [데이터베이스 작동 방식](#데이터베이스-작동-방식)
+* [전투 시스템](#전투-시스템)
+    * [BattleManager](#battlemanager)
+    * [BattlePhaseManager](#battlephasemanager)
+    * [BattleEnemyManager](#battleenemymanager)
+    * [BattleEventManager](#battleeventmanager)
+    * [스테이터스 시스템](#스테이터스-시스템)
+    * [전투 로직](#전투-로직)
+* [UI](#ui)
+    * [폰트](#폰트)
+    * [텍스트 데이터](#텍스트-데이터)
+    * [팝업 관리](#팝업-관리)
+* [매니저 클래스](#매니저-클래스)
+    * [Json 파일관리](#json-파일관리)
+    * [클라우드 저장](#클라우드-저장)
+    * [소셜 플랫폼 업적 진행도관리](#소셜-플랫폼-업적-진행도관리)
+    * [유니티 분석](#유니티-분석)
+    * [게임 초기화 로딩](#게임-초기화-로딩)
 
 ### 데이터베이스
 
@@ -830,7 +854,7 @@ public class UnityAnalyticsEvent : Event {
 
 > **Start (Loading Sequence)**
 >
-> 게임 초기화의 전체 흐름을 제어하는 코루틴입니다. `SocialLogin`(소셜 로그인), `CheckVersion`(무결성 검사), `LoadProductData`(구매 복원), `LoadData`(로컬 로드) 등 각 단계를 순차적으로 실행하며, `yield return`을 통해 앞선 프로세스가 완벽히 종료된 후에만 다음 단계로 진입하여 초기화 순서를 보장합니다.
+> 게임 초기화의 전체 흐름을 제어하는 코루틴입니다. `SocialLogin`(소셜 로그인), `CheckVersion`(무결성 검사), `LoadProductData`(구매 복원), `LoadData`(로컬 데이터 로드) 등 각 단계를 순차적으로 실행하며, `yield return`을 통해 앞선 프로세스가 완벽히 종료된 후에만 다음 단계로 진입하여 초기화 순서를 보장합니다.
 
 ```csharp
 IEnumerator Start() {
