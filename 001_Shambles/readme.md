@@ -7,15 +7,13 @@
 
 ## 1. 게임 개요
 
-**"당신이 알던 세상은 이미 멸망했다."**
+포스트 아포칼립스 세계관을 배경으로 한 2D 텍스트 RPG, 덱빌딩, 로그라이크 게임입니다.
 
-샴블즈는 대전쟁으로 인해 문명이 멸망하고 500년이 흐른 세계를 배경으로 하는 **텍스트 RPG, 덱빌딩, 로그라이크**가 결합된 게임입니다.
-
-*   **장르**: 포스트 아포칼립스 덱빌딩 로그라이크 텍스트 RPG
-*   **주요 특징**:
-    *   텍스트 애니메이션을 이용한 독특한 텍스트 RPG
-    *   선택에 따라 달라지는 수많은 분기점과 멀티 엔딩
-    *   전략적인 턴제 카드 전투 시스템
+*   **장르**: 텍스트 RPG, 덱빌딩, 로그라이크
+*   **개발 기간**: 2년
+*   **출시일**: 2025.03.27 (Mobile) / 2025.06.26 (PC)
+*   **참여 인원**: 기획 2명, 아트 4명, 프로그래밍 3명
+*   **역할**: 리드 프로그래머
 
 
 ## 2. 사용된 기술 스택
@@ -40,17 +38,30 @@ Unity, C#, SQLite
     * **타입 안전 변환**: 제네릭 메서드를 통해 `DBNull` 처리와 `Nullable` 타입 변환을 자동으로 수행합니다.
     * **Enum 자동 매칭**: 레벤슈타인 거리 알고리즘을 활용하여 문자열 오타나 표기 차이가 있어도 가장 유사한 Enum 값을 찾아 반환합니다.
     * **리소스 자동 관리**: `IDisposable` 인터페이스를 구현하여 `using` 문과 함께 사용 시 자동으로 리소스를 해제합니다.
+```csharp
+public static CustomDataReader SelectQuery(string query, ENUM_DATABASE_PATH enumDataBasePath = ENUM_DATABASE_PATH.GAME_DATA) {
+    if (query == null) return null;
+
+    try {
+        OpenConnection(enumDataBasePath);
+        using (SqliteCommand cmd = new SqliteCommand(query, connection[(int)enumDataBasePath])) {
+            CustomDataReader customReader = new CustomDataReader(cmd.ExecuteReader());
+            readerList.Add(customReader);
+            return customReader;
+        }
+    }
+    catch (Exception e) {
+        // ... (에러 핸들링 및 DB 복구 로직 생략)
+        return null;
+    }
+}
+```
+
+> **ParseStatusBasedCardDescriptionText**
+>
+> 카드 설명 텍스트에 포함된 동적 태그(예: `#damage`)를 파싱하여 실제 수치로 변환합니다. 카드의 현재 스탯 정보와 연동된 `StatusCalc` 메소드를 통해 최종 적용 수치를 계산하고, 이를 색상 태그가 포함된 문자열로 포맷팅하여 직관적인 툴팁을 생성합니다.
 
 ```csharp
-public T GetSafeValue<T>(int colIndex) {
-    object theValue = dataReader.GetValue(colIndex);
-    if (DBNull.Value != theValue) {
-        return (T)Convert.ChangeType(theValue, typeof(T));
-    }
-    return default;
-}
-
-// 카드 설명 텍스트를 스탯 기반으로 계산하여 파싱
 public static string ParseStatusBasedCardDescriptionText(this string rawText, int[] status, Card card) {
     foreach (var item in textList) {
         if (item.Contains(damageTag) || item.Contains(shieldTag) || item.Contains(healTag)) {
@@ -70,7 +81,7 @@ public static string ParseStatusBasedCardDescriptionText(this string rawText, in
 
 * #### Data Transfer Object (DTO)
 
-    데이터 통신 비용 최적화를 위해 데이터 객체 구조를 이원화하여 설계했습니다. 물리적인 DB I/O 및 네트워크 환경에 따른 성능 저하를 방지하기 위함입니다.
+    물리적인 DB I/O 발생과 네트워크 환경에 따른 성능 저하를 방지하고자 데이터 객체 구조를 이원화하여 설계했습니다.
 
     * **메인 데이터 DTO**
         * 단일 쿼리로 모델의 모든 속성을 Fetch합니다.
@@ -143,7 +154,7 @@ public interface ICard : IRenderableData, IRarity {
     DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직과 데이터 접근을 분리합니다. 각 데이터 모델별로 전용 DAO 클래스를 구성하여 관련 쿼리와 파싱 로직을 집중 관리합니다. 특히 C#의 Boxing/Unboxing 과정에서 발생하는 성능 부하를 최소화하기 위해, 데이터 변환 로직을 쿼리 단계에서 처리하도록 DAO를 전문화하여 런타임 오버헤드를 줄였습니다.
 
     * **테이블명 상수화**: 테이블 이름은 `TableDefine` Enum으로 정의하여 오타를 방지하고 일관성을 유지합니다.
-    * **다양한 쿼리 메소드**: 동일 데이터에 대해 여러 조회 메소드를 제공하여 상황에 맞는 최적의 쿼리를 사용합니다. (단일 조회, 전체 조회, 조건별 필터링 등)
+    * **다양한 쿼리 메소드**: 단일 조회, 전체 조회, 조건별 필터링 등 상황에 맞는 최적의 쿼리 메소드를 제공합니다.
     * **리소스 관리**: `DataReader`는 `using` 문 내에서 호출하여 사용 후 자동으로 리소스를 해제합니다.
     * **쿼리 최적화**: LEFT JOIN을 활용하여 관련 데이터를 단일 쿼리로 조회하고, 불필요한 Round-trip을 최소화합니다.
 
@@ -301,7 +312,7 @@ public T GetSafeValue<T>(int colIndex) {
 
 전투 시스템은 싱글톤 패턴의 `BattleManager`를 중심으로 설계되었습니다. 카드, 버프, 장비, 적 등 전투에 참여하는 모든 오브젝트는 다형성 기반의 인터페이스를 상속받아 캡슐화되어 있지만, 실제 효과 발동과 상호작용은 대부분 매니저를 통해 수행됩니다. 이는 오브젝트 간 직접 참조를 방지하고, 새로운 오브젝트 추가 시 기존 로직 수정 없이 확장할 수 있도록 설계한 것입니다.
 
-전투 시작 시 플레이어 고유 시드값으로 랜덤 상태를 초기화하여, 동일한 행동 시퀀스가 항상 동일한 결과를 보장합니다. 게임을 껐다 켜도 같은 선택을 하면 같은 결과로 이어집니다. Enum 비트 연산을 활용한 복합 타겟팅 시스템으로 단일 메서드 호출로 여러 대상에게 효과를 적용하며, 옵저버 패턴을 통해 버프, 장비, 업적 등이 전투 이벤트를 구독하여 느슨한 결합을 유지합니다.
+전투 시작 시 플레이어 고유 시드값으로 랜덤 상태를 초기화하여, 동일한 행동 시퀀스가 항상 동일한 결과를 보장합니다. 게임을 종료 후 다시 접속해도 동일한 선택을 한다면 같은 결과로 이어집니다. Enum 비트 연산을 활용한 복합 타겟팅 시스템으로 단일 메서드 호출로 여러 대상에게 효과를 적용하며, 옵저버 패턴을 통해 버프, 장비, 업적 등이 전투 이벤트를 구독하여 느슨한 결합을 유지합니다.
 
 아래는 전투 시스템의 핵심 로직을 담당하는 4개의 특징적인 매니저 클래스에 대한 설명입니다.
 
@@ -354,8 +365,11 @@ public class BattleManager : MonoBehaviour, IDisposable {
 }
 ```
 
+> **ProceedEnemyPattern**
+>
+> 재귀 호출을 사용하여 적들의 턴을 순차적으로 진행합니다. `BattleManager.IsBattleEnd`를 체크하여 전투 종료 시 중단하고, 현재 타겟이 `ENEMY3`를 초과하면 플레이어 턴(`TURN_START_STAND_BY`)으로 넘깁니다. 타겟 적이 존재하지 않을 경우 비트 시프트 연산(`(int)current << 1`)을 통해 다음 순번의 적을 즉시 탐색합니다.
+
 ```csharp
-// BattleEnemyManager - 적 패턴 기반 턴 진행
 public void ProceedEnemyPattern(ENUM_BATTLE_PHASE_TARGET current) {
     if (BattleManager.GetInstance().IsBattleEnd == true) return;
     if (current > ENEMY3) {
@@ -364,13 +378,18 @@ public void ProceedEnemyPattern(ENUM_BATTLE_PHASE_TARGET current) {
     }
     var targetEnemy = GetEnemyObject(current);
     if (targetEnemy == null) {
-        ProceedEnemyPattern((ENUM_BATTLE_PHASE_TARGET)((int)current << 1));  // 다음 적으로 이동
+        ProceedEnemyPattern((ENUM_BATTLE_PHASE_TARGET)((int)current << 1));
         return;
     }
     StartCoroutine(ProceedEnemy(targetEnemy));
 }
+```
 
-// 살아있는 적에게 특정 action 실행
+> **ProceedEnemyAction**
+>
+> 비트 플래그(`HasFlag`)를 활용하여 다수의 적에게 일괄적으로 특정 `Action`을 수행합니다. `BattleEnemyObjectList`를 순회하며 입력받은 `enemyTargets` 플래그에 포함된 적(`targetEnemy`)에게만 델리게이트로 전달받은 로직을 실행합니다.
+
+```csharp
 public void ProceedEnemyAction(ENUM_BATTLE_PHASE_TARGET enemyTargets, Action<BattleEnemyObject> action) {
     for (int i = 0; i < BattleEnemyObjectList.Count; i++) {
         var targetEnemy = BattleEnemyObjectList[i];
@@ -416,14 +435,28 @@ public class BattleEventManager : MonoBehaviour {
         * `IBattleStatusAttributes`: HP, AP, 실드, 스탯 배열, 동적 수치, 버프 카운터 등의 속성
         * `IBattleStatusAction`: 피해, 회복, 실드 획득, 버프 부여 등의 행동 메서드
     * **BattleStatus (복합 타겟 시스템)**: 여러 `IBattleStatus` 대상에게 동시에 효과를 적용하기 위한 복합 객체입니다. Enum 플래그 연산을 활용하여 유연한 타겟팅이 가능합니다.
-        * Enum 비트 연산으로 다중 타겟 지정 (예: `~ENEMY1 & ALL` = 적1을 제외한 모든 대상)
+        * Enum 비트 연산으로 다중 타겟 지정 (예: `~ENEMY1 & ALL` 구문은 적1을 제외한 모든 대상을 의미)
         * 단일 메서드 호출로 여러 대상에게 동시에 효과 적용
-        * 타겟 추가/제거/교체 동적 관리
+        * 타겟 추가/제거/교체 동적 관리.
     * **BattleDynamicValues**: 전투 중 동적으로 변화하는 상태값들을 관리하는 클래스입니다. 버프/디버프 효과, 키워드 상태, 장비 플래그, 스탯 보정치 등을 포함합니다.
         * 스탯 보정 시스템: 합연산(`statusAddition`), 곱연산(`statusMultiply`), 최종값(`statusFinal`) 분리
         * 이벤트 기반 UI 갱신: 스탯 변경 시 자동으로 `STAT_CHANGED` 이벤트 발생
         * 상태 플래그 관리: 관통, 경화, 은신, 무적, 기절 등 다양한 상태 효과
     * **BattleDamage**: 피해 정보를 캡슐화하는 데이터 클래스입니다. 연산자 오버로딩을 통해 피해량 계산을 직관적으로 처리합니다.
+
+```csharp
+[System.Flags]
+public enum ENUM_BATTLE_PHASE_TARGET
+{
+    PLAYER  = 1, // 0b_0000_0001
+    ENEMY1  = 2, // 0b_0000_0010
+    ENEMY2  = 4, // 0b_0000_0100
+    ENEMY3  = 8, // 0b_0000_1000
+    ALL_ENEMIES   = ENEMY1 | ENEMY2 | ENEMY3, // 14
+    ALL     = PLAYER | ENEMY1 | ENEMY2 | ENEMY3, // 15
+    NONE         // 16
+}
+```
 
 ```csharp
 // 여러 IBattleStatus를 타겟으로 사용하기 위한 복합 객체
@@ -454,6 +487,7 @@ public class BattleStatus : IBattleStatusAction {
 > - [BattleEnemyStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
 > - [BattlePlayerObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
 > - [BattleEnemyObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
+> - [ENUM_BATTLE_PHASE_TARGET.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/006_Enum/ENUM_BATTLE_PHASE_TARGET.cs)
 
 
 * #### 전투 로직
@@ -465,7 +499,7 @@ public class BattleStatus : IBattleStatusAction {
     * **카드 (Card)**: 플레이어 카드와 적 카드 모두 `IBattleFactor`를 상속받아 동일한 효과 처리 파이프라인을 사용합니다.
         * `IBattlePlayerCard`: 세력, 코스트, 수치 데이터, 사용 후 목적지, 연계 장비 등
         * `IBattleEnemyCard`: 소유자/타겟 상태, 카드 초기화 및 발동 메서드
-        * 적의 공격과 스킬도 동일한 카드 시스템을 기반으로 동작하여 로직 재사용성 극대화
+        * 적의 공격과 스킬도 동일한 카드 시스템을 기반으로 동작하여 로직 재사용성을 극대화했습니다.
     * **버프 (Buff)**: `IBattleBuff` 인터페이스를 통해 모든 버프/디버프를 일관되게 관리합니다.
         * 버프/디버프 유형 구분 (`ENUM_BUFF_TYPE`)
         * 카운터 감소 방식 지정 (`ENUM_BUFF_COUNTER_TYPE`: 턴 종료, 피격 시, 행동 시 등)
@@ -522,10 +556,10 @@ public interface IBattleBuff : IBattleFactor {
 다양한 플랫폼과 해상도 환경에 대응하기 위해, 기기별 UI 프리셋을 런타임에 적용하도록 구현했습니다. 반복적인 UI 작업을 자동화하여 개발 효율과 유지보수성을 확보했습니다.
 
 
-* #### 폰트 관리
+* #### 폰트
 
     * **프리셋 기반 자동 조정**: `TextMeshPro`를 기반으로 언어와 플랫폼별 텍스트 크기와 폰트 스타일을 관리하는 프리셋 에디터를 사용합니다.
-    * **환경 대응**: 각 텍스트 오브젝트가 자신의 프리셋 타입을 명시하여, 실행 환경(모바일/PC, 한국어/영어 등)에 맞춰 자동으로 최적의 표시 상태로 조정되는 구조입니다.
+    * **환경 대응**: 각 텍스트 오브젝트가 자신의 프리셋 타입을 명시하여, 실행 환경(모바일/PC, 한국어/영어 등)에 맞춰 자동으로 최적의 표시 상태로 조정됩니다.
 
 > **GetFontPresetData**
 >
@@ -565,15 +599,15 @@ public static FontSize CurrentFontSize {
 > - [FontSizeDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/FontSizeDefine.cs)
 
 
-* #### 텍스트 시스템
+* #### 텍스트 데이터
 
     * **JSON-Enum 1:1 매칭**: 모든 게임 내 텍스트 데이터를 JSON 파일로 관리하며, 코드 내 Enum과 1:1로 매칭되어 유지보수성을 확보합니다.
-    * **자동화된 다국어 처리**: 언어별 JSON 데이터만 변경하면 즉시 게임에 반영되며, 특정 언어 항목 누락 시 기본 언어 값으로 대체되는 페일세이프(Fail-safe) 기능을 지원합니다.
+    * **자동화된 다국어 처리**: 언어별 JSON 데이터만 변경하면 즉시 게임에 반영되며, 특정 언어 항목 누락 시 기본 언어 값으로 대체되는 페일세이프 기능을 지원합니다.
     * **오류 방지**: 키가 존재하지 않는 경우에도 자동으로 빈 문자열을 할당하여 런타임 에러를 방지합니다.
 
 > **TextDefine**
 >
-> 현재 언어 설정에 맞는 텍스트 데이터를 반환합니다. 데이터가 메모리에 없는 경우 실시간으로 로드하여 반환하는 지연 로딩(Lazy Loading) 방식을 사용합니다.
+> 현재 언어 설정에 맞는 텍스트 데이터를 반환합니다. 데이터가 메모리에 없는 경우 실시간으로 로드하여 반환하는 지연 로딩 방식을 사용합니다.
 
 ```csharp
 public static TextDefineString Current {
@@ -613,10 +647,202 @@ public TextDefineString(ENUM_LANGUAGE languageEnum) {
 > - [TextDefineStringData.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineStringData.cs)
 
 
-* #### 팝업 시스템
+* #### 팝업 관리
 
-    * **인터페이스 통합 제어**: 모든 팝업 객체가 `IPopup` 인터페이스를 공유하여 통일된 방식으로 제어됩니다.
-    * **표준화된 시퀀스**: 팝업 종료 시 `IPopupRequest`를 통해 요청이 처리되며, 모든 팝업이 지정된 애니메이션 시퀀스를 공유하여 일관된 사용자 경험과 개발 편의성을 제공합니다.
+    * **팝업 객체 표준화**: `IPopup` 인터페이스를 상속받아 모든 팝업 객체를 통합 관리하고, `CloseAnimationPopup` 클래스를 통해 종료 시 공통된 DOTween 애니메이션 시퀀스가 실행되도록 구현하였습니다.
 
-> - [Font Definitions](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/004_UI/Font)
-> - [Popup System](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/004_UI/Popup)
+> **CloseAnimationPopup**
+>
+> 팝업 UI의 기반이 되는 클래스로, 팝업이 활성화되는 즉시 `GameManager`의 팝업 스택에 등록되어 '뒤로가기' 키를 통한 순차석 닫기를 지원합니다. 닫기 요청(Close Request) 발생 시 즉시 객체가 사라지지 않고, 지정된 축소 및 페이드 애니메이션을 모두 수행한 뒤에 비활성화 되도록 생명주기를 관리합니다.
+
+```csharp
+public class CloseAnimationPopup : MonoBehaviour, IPopup {
+    // 닫기 요청 시 애니메이션 실행 후 비활성화 처리
+    public virtual void ClosePopupRequest() {
+        if (isAnimated == false) {
+            ClosePopup();
+            return;
+        }
+        
+        // DOTween을 사용하여 스케일 축소 및 배경 페이드아웃 연출
+        // 연출 종료 시 콜백(OnComplete)을 통해 오브젝트 비활성화 및 상태 초기화 수행
+    }
+
+    // 활성화/비활성화 시 매니저 스택 자동 관리
+    protected virtual void OnEnable() {
+        GameManager.GetInstance()?.PushPopup(this);
+    }
+    protected virtual void OnDisable() {
+        GameManager.GetInstance()?.PopPopup();
+    }
+}
+```
+
+> - [IPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/IPopup.cs)
+> - [CloseAnimationPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/CloseAnimationPopup.cs)
+---
+### 매니저 클래스
+
+게임의 핵심 기능을 담당하는 매니저 클래스들은 싱글톤 패턴이나 정적 클래스로 구현되어 전역적인 접근성을 제공하며, 각 기능별로 책임을 명확히 분리했습니다.
+
+#### Json 파일관리
+
+게임 데이터의 로컬 저장 및 관리를 위한 유틸리티 클래스입니다. `Newtonsoft.Json`을 래핑하여 직렬화/역직렬화를 수행하며, 보안이 필요한 데이터에 대해 암호화를 지원합니다.
+
+*   **AES 암호화**: 배포 빌드(`Release`)에서는 데이터 무결성 보호를 위해 AES 알고리즘으로 파일을 암호화하여 저장합니다. (디버그 모드에서는 비활성화)
+*   **데이터 무결성 검사**: 파일 로드 시 `CheckIntagrity` 메서드를 통해 클래스의 필드 및 프로퍼티 누락 여부를 검증하여 데이터 오염을 방지합니다.
+*   **플랫폼별 파일 처리**: Android(UnityWebRequest)와 PC/iOS(FileStream) 환경에 맞춰 파일 읽기/쓰기 방식을 분기하여 처리합니다.
+
+> **ReadData<T>**
+>
+> 제네릭 타입 `T`를 받아 파일 입출력을 수행합니다. 파일 시스템에서 JSON 텍스트를 읽어온 후, 암호화 플래그를 확인하여 필요한 경우 AES 복호화를 선행합니다. 이후 `Newtonsoft.Json`을 통해 객체로 역직렬화하고, `CheckIntagrity` 메소드로 데이터 무결성을 검증합니다. 검증 실패 시 `false`를 반환하여 데이터 오염을 알립니다.
+
+```csharp
+public static bool ReadData<T>(ENUM_JSON_FILE fileType, out T data, bool isIntact = false) where T : new() {
+    string jsonData = File.ReadAllText(filePath);
+    
+    if (fileEncryptionStatus[fileType] == true) {
+        jsonData = Decrypt(jsonData, fileNameList[fileType]);
+    }
+
+    data = JsonConvert.DeserializeObject<T>(jsonData, settings);
+
+    if (!isIntact && !CheckIntagrity<T>(jsonData)) {
+        data = new T();
+        return false; 
+    }
+    return true;
+}
+```
+
+> **CheckIntagrity<T>**
+>
+> `JObject`로 파싱된 JSON 데이터와 리플렉션으로 추출한 타입 `T`의 필드 정보를 대조합니다. 클래스에 정의된 모든 필드가 JSON 데이터 내에 키값으로 존재하는지 순회하며 검사합니다. 필수 데이터가 하나라도 누락되었을 경우 즉시 실패 처리하여 불완전한 데이터 로드를 차단합니다.
+
+```csharp
+private static bool CheckIntagrity<T>(string jsonData) where T : new() {
+    JObject jsonObj = JObject.Parse(jsonData);
+    Type type = typeof(T);
+
+    foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
+        if (!jsonObj.TryGetValue(field.Name, StringComparison.OrdinalIgnoreCase, out JToken _)) {
+            return false;
+        }
+    }
+    return true;
+}
+```
+
+> - [JsonDataManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/JsonDataManager.cs)
+
+#### 클라우드 저장
+
+Unity Services의 Cloud Save를 활용하여 플랫폼 간 데이터 동기화를 지원합니다. Google Play Games 및 Apple Game Center 로그인과 연동되어 데이터를 저장합니다.
+
+*   **멀티 플랫폼 인증**: Android(Google Play), iOS(Game Center) 등 실행 플랫폼에 따라 적절한 인증 서비스를 자동으로 초기화하고 로그인합니다.
+*   **비동기 처리**: `async/await` 패턴을 사용하여 대용량 데이터 저장/로드 시 메인 스레드 멈춤 현상(Freezing)을 방지했습니다.
+*   **데이터 충돌 방지**: 클라우드 데이터와 로컬 데이터를 비교/검증하는 로직을 포함하여 데이터 손실을 최소화합니다.
+
+> **SaveInternal**
+>
+> 데이터 저장 전 `Unity Services` 초기화 및 로그인 상태를 이중으로 점검하여 안전성을 확보합니다. 로그인이 되어있지 않다면 즉시 재로그인을 시도하며, 최종 실패 시 에러 콜백을 반환합니다. 모든 검증이 통과되면 `CloudSaveService` API를 통해 비동기적으로 데이터를 클라우드에 업로드합니다.
+
+```csharp
+async Task SaveInternal(string json, Action<CLOUD_SAVE_RESULT> onErrorCallback) {
+    await UnityServices.InitializeAsync();
+    
+    if (!AuthenticationService.Instance.IsSignedIn) {
+        await InitializeAndLoginAsync();
+        
+        if (!AuthenticationService.Instance.IsSignedIn) {
+            onErrorCallback?.Invoke(CLOUD_SAVE_RESULT.ERROR_LOGIN_FAIL);
+            return;
+        }
+    }
+
+    await CloudSaveService.Instance.Data.Player.SaveAsync(new Dictionary<string, object> {
+        { PlayerDataKey, json }
+    });
+}
+```
+
+> - [CloudSaveManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/CloudSaveManager.cs)
+
+#### 소셜 플랫폼 업적 진행도관리
+
+다양한 스토어(Steam, Google Play, App Store, Stove)의 업적 시스템을 단일 인터페이스로 통합 관리합니다. 플랫폼별 SDK 차이를 캡슐화하여 비즈니스 로직에서 플랫폼 의존성을 제거했습니다.
+
+*   **통합 인터페이스**: `IncrementAchievementProgress`, `UnlockAchievements` 등 통일된 메서드로 모든 플랫폼의 업적을 제어합니다.
+*   **진행도 누적 관리**: 단순 해금뿐만 아니라 진행형 업적(예: 100회 달성)의 진행도를 로컬 및 서버에 동기화합니다.
+*   **ID 매핑 시스템**: 플랫폼별로 상이한 업적 ID를 내부 Enum 키와 매핑하여 코드 일관성을 유지합니다.
+
+> **OnAchievementUnlocked**
+>
+> 특정 업적 해금 요청 시, 현재 빌드된 타겟 플랫폼(`STEAMWORKS_NET`, `PLAY_STORE`, `APP_STORE`)에 맞춰 적절한 API를 호출합니다. Steam의 `UnlockAchievement`나 모바일의 `Social.ReportProgress` 등 상이한 플랫폼별 구현을 캡슐화하여, 비즈니스 로직에서는 단일 메소드 호출만으로 모든 플랫폼에 대응할 수 있습니다.
+
+```csharp
+public static void OnAchievementUnlocked(int achievementIndex) {
+#if STEAMWORKS_NET
+    if (SteamManager.Initialized) {
+        SteamManager.Instance.UnlockAchievement($"achievement_{achievementIndex}");
+    }
+#elif PLAY_STORE
+    Social.ReportProgress(GetAchievementGoogleIDFromIndex(achievementIndex), 100.0f, (bool success) => { });
+#elif APP_STORE
+    Social.ReportProgress(GetAchievementIDFromIndex(achievementIndex), 100.0f, (bool success) => { });
+#endif
+}
+```
+
+> - [AchievementEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/AchievementEventManager.cs)
+
+#### 유니티 분석
+
+유저의 행동 데이터를 수집하여 게임 밸런스 조정 및 개선에 활용하기 위한 분석 모듈입니다. 수집된 로그는 Unity Dashboard의 **SQL Data Explorer**를 활용하여 복합적인 상관관계를 분석하는 데 사용됩니다.
+
+*   **Type-Safe 이벤트 파라미터**: `UnityAnalyticsEvent` 내부 클래스를 통해 파라미터 타입을 강제하여, 잘못된 데이터 타입 전송으로 인한 로그 누락을 방지합니다.
+*   **이벤트 키 관리**: Enum 키를 사용하여 이벤트 명칭의 오타를 방지하고 관리를 용이하게 했습니다.
+*   **SQL 기반 고차원 분석**: 단순한 지표 모니터링을 넘어, 여러 이벤트 간의 인과관계를 쿼리로 분석합니다. (※ 개인 식별 정보는 수집하지 않습니다.)
+    *   *활용 예시*: "특정 이벤트를 진행한 유저 집단이 이후 전투에서 특정 카드를 덱에 포함시킨 비율" 등을 쿼리하여 스토리 몰입도와 전략 선택의 상관관계를 도출할 수 있습니다.
+
+> **UnityAnalyticsEvent**
+>
+> `Event` 클래스를 상속받아 파라미터 타입을 강력하게 규제합니다. 프로퍼티 Setter 내부에서 `HasValue`나 `IsNullOrEmpty` 체크를 수행하여, 유효하지 않은 데이터(Null)가 전송되는 것을 원천적으로 차단하고 필수 데이터만 선별적으로 로그에 포함시킵니다.
+
+```csharp
+public class UnityAnalyticsEvent : Event {
+    public UnityAnalyticsEvent(string EventName) : base(EventName) { }
+    
+    public int? example_param_int { set { if (value.HasValue) SetParameter("example_param_int", value.Value); } }
+    public string example_param_str { set { if (!string.IsNullOrEmpty(value)) SetParameter("example_param_str", value); } }
+}
+```
+
+> - [UnityAnalyticsManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/UnityAnalyticsManager.cs)
+
+#### 게임 초기화 로딩
+
+게임 시작 시 필요한 모든 리소스와 데이터를 순차적으로 로드하고 무결성을 점검하는 초기화 파이프라인입니다.
+
+*   **순차적 로딩 프로세스**: 리소스 다운로드 -> 분석 툴 초기화 -> 데이터 경로 설정 -> 로그인 -> 버전 체크 -> DB 로드 순으로 안전하게 게임을 초기화합니다.
+*   **버전 제어 및 업데이트**: 앱 버전과 데이터 버전을 분리 관리하여, 앱 업데이트 없이 데이터 패치만으로 밸런스를 수정할 수 있는 구조를 구축했습니다.
+*   **공지사항 시스템**: 이미지 캐싱을 지원하는 공지사항 팝업 데이터를 로딩 중에 미리 받아와 메인 화면 진입 시 즉시 표시합니다.
+
+> **Start (Loading Sequence)**
+>
+> 게임 초기화의 전체 흐름을 제어하는 코루틴입니다. `SocialLogin`(소셜 로그인), `CheckVersion`(무결성 검사), `LoadProductData`(구매 복원), `LoadData`(로컬 로드) 등 각 단계를 순차적으로 실행하며, `yield return`을 통해 앞선 프로세스가 완벽히 종료된 후에만 다음 단계로 진입하여 초기화 순서를 보장합니다.
+
+```csharp
+IEnumerator Start() {
+    yield return SocialLogin();
+
+    yield return CheckVersion();
+
+    ProductPurchasedStatusLoader productLoader = new ProductPurchasedStatusLoader();
+    yield return productLoader.LoadProductData();
+
+    yield return LoadData(ENUM_JSON_FILE.GameData);
+}
+```
+
+> - [LoadingSceneManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/LoadingSceneManager.cs)
