@@ -47,7 +47,7 @@
     * [유니티 분석](#유니티-분석)
     * [게임 초기화 로딩](#게임-초기화-로딩)
 
-### 데이터베이스
+### [데이터베이스](#기술적-특징)
 
 메인 게임 데이터 관리에는 **SQLite**를 사용합니다. SQLite는 서버 없이 단일 파일로 동작하는 경량 데이터베이스로, 모바일 환경에서도 빠른 읽기 성능과 적은 메모리 사용량을 제공합니다. 덕분에 게임 데이터를 하나의 DB 파일에서 효율적으로 관리할 수 있습니다.
 
@@ -223,7 +223,7 @@ public class CardDao : CollectionDao {
 > - [DAO Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
 
 
-### 데이터베이스 작동 방식
+### [데이터베이스 작동 방식](#기술적-특징)
 
 ---
 
@@ -332,7 +332,7 @@ public T GetSafeValue<T>(int colIndex) {
 ---
 
 
-### 전투 시스템
+### [전투 시스템](#기술적-특징)
 
 전투 시스템은 싱글톤 패턴의 `BattleManager`를 중심으로 설계되었습니다. 카드, 버프, 장비, 적 등 전투에 참여하는 모든 오브젝트는 다형성 기반의 인터페이스를 상속받아 캡슐화되어 있지만, 실제 효과 발동과 상호작용은 대부분 매니저를 통해 수행됩니다. 이는 오브젝트 간 직접 참조를 방지하고, 새로운 오브젝트 추가 시 기존 로직 수정 없이 확장할 수 있도록 설계한 것입니다.
 
@@ -575,7 +575,7 @@ public interface IBattleBuff : IBattleFactor {
 ---
 
 
-### UI
+### [UI](#기술적-특징)
 
 다양한 플랫폼과 해상도 환경에 대응하기 위해, 기기별 UI 프리셋을 런타임에 적용하도록 구현했습니다. 반복적인 UI 작업을 자동화하여 개발 효율과 유지보수성을 확보했습니다.
 
@@ -705,7 +705,7 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 > - [IPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/IPopup.cs)
 > - [CloseAnimationPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/CloseAnimationPopup.cs)
 ---
-### 매니저 클래스
+### [매니저 클래스](#기술적-특징)
 
 게임의 핵심 기능을 담당하는 매니저 클래스들은 싱글톤 패턴이나 정적 클래스로 구현되어 전역적인 접근성을 제공하며, 각 기능별로 책임을 명확히 분리했습니다.
 
