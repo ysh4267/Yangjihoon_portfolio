@@ -5,7 +5,7 @@
 <a href="https://apps.apple.com/kr/app/%EC%83%B4%EB%B8%94%EC%A6%88-%EC%A2%85%EB%A7%90%EC%9D%98-%ED%9B%84%EC%86%90%EB%93%A4/id6740197039"><img src="https://cdn.simpleicons.org/appstore/0066CC" height="60" alt="App Store"></a><sub>(App Store)</sub>
 
 
-## 게임 개요
+## 개요
 
 포스트 아포칼립스 세계관을 배경으로 한 2D 텍스트 RPG, 덱빌딩, 로그라이크 게임입니다.
 
@@ -15,14 +15,14 @@
 *   **참여 인원**: 기획 2명, 아트 4명, 프로그래밍 3명
 *   **역할**: 리드 프로그래머
 
-## 사용된 기술 스택
+## 기술 스택
 
 [![Unity](https://img.shields.io/badge/Unity-000000?logo=unity&logoColor=white&labelColor=555555)](https://unity.com/) [![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)](https://dotnet.microsoft.com/ko-kr/languages/csharp) [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white&labelColor=555555)](https://dotnet.microsoft.com/) [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white&labelColor=555555)](https://www.sqlite.org/) [![Amazon S3](https://img.shields.io/badge/Amazon_S3-FF9900?logo=amazons3&logoColor=white)](https://aws.amazon.com/s3/)
 
 [![Visual Studio](https://img.shields.io/badge/Visual_Studio-5C2D91?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/) [![Visual Studio Code](https://img.shields.io/badge/Visual_Studio_Code-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 
 
-## 기술적 특징
+## 기술 특징
 
 * [데이터베이스](#데이터베이스)
     * [DataReader](#datareader)
@@ -40,12 +40,16 @@
     * [폰트](#폰트)
     * [텍스트 데이터](#텍스트-데이터)
     * [팝업 관리](#팝업-관리)
-* [매니저 클래스](#매니저-클래스)
-    * [Json 파일관리](#json-파일관리)
+* [매니저](#매니저)
+    * [JSON 관리](#json-관리)
     * [클라우드 저장](#클라우드-저장)
-    * [소셜 플랫폼 업적 진행도관리](#소셜-플랫폼-업적-진행도관리)
-    * [유니티 분석](#유니티-분석)
-    * [게임 초기화 로딩](#게임-초기화-로딩)
+    * [업적 시스템](#업적-시스템)
+    * [데이터 분석](#데이터-분석)
+    * [로딩 시퀀스](#로딩-시퀀스)
+* [개발 환경](#개발-환경)
+    * [Excel 워크플로우](#excel-워크플로우)
+    * [외부 도구](#외부-도구)
+    * [에디터 확장](#에디터-확장)
 
 ### 데이터베이스
 
@@ -62,6 +66,27 @@
     * **타입 안전 변환**: 제네릭 메서드를 통해 `DBNull` 처리와 `Nullable` 타입 변환을 자동으로 수행합니다.
     * **Enum 자동 매칭**: 레벤슈타인 거리 알고리즘을 활용하여 문자열 오타나 표기 차이가 있어도 가장 유사한 Enum 값을 찾아 반환합니다.
     * **리소스 자동 관리**: `IDisposable` 인터페이스를 구현하여 `using` 문과 함께 사용 시 자동으로 리소스를 해제합니다.
+
+```mermaid
+sequenceDiagram
+    participant Game as Game Engine / Logic
+    participant DAO as Data Access Object (DAO)
+    participant SQLMgr as SQLiteManager
+    participant DB as SQLite DB File
+
+    Game->>DAO: 데이터 요청 (예: GetCardData)
+    DAO->>SQLMgr: 쿼리 실행 요청 (SelectQuery)
+    
+    Note over SQLMgr, DB: Connection & Command 실행
+    SQLMgr->>DB: SQL 실행
+    DB-->>SQLMgr: Raw Data
+
+    SQLMgr-->>DAO: DataReader 객체 반환
+    
+    Note over DAO: Reader를 순회하며<br/>DTO 객체로 매핑 (Parsing)
+    
+    DAO-->>Game: 가공된 DTO (또는 List) 반환
+```
 ```csharp
 public static CustomDataReader SelectQuery(string query, ENUM_DATABASE_PATH enumDataBasePath = ENUM_DATABASE_PATH.GAME_DATA) {
     if (query == null) return null;
@@ -705,11 +730,11 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 > - [IPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/IPopup.cs)
 > - [CloseAnimationPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/CloseAnimationPopup.cs)
 ---
-### 매니저 클래스
+### 매니저
 
 게임의 핵심 기능을 담당하는 매니저 클래스들은 싱글톤 패턴이나 정적 클래스로 구현되어 전역적인 접근성을 제공하며, 각 기능별로 책임을 명확히 분리했습니다.
 
-#### Json 파일관리
+#### JSON 관리
 
 게임 데이터의 로컬 저장 및 관리를 위한 유틸리티 클래스입니다. `Newtonsoft.Json`을 래핑하여 직렬화/역직렬화를 수행하며, 보안이 필요한 데이터에 대해 암호화를 지원합니다.
 
@@ -792,7 +817,7 @@ async Task SaveInternal(string json, Action<CLOUD_SAVE_RESULT> onErrorCallback) 
 
 > - [CloudSaveManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/CloudSaveManager.cs)
 
-#### 소셜 플랫폼 업적 진행도관리
+#### 업적 시스템
 
 다양한 스토어(Steam, Google Play, App Store, Stove)의 업적 시스템을 단일 인터페이스로 통합 관리합니다. 플랫폼별 SDK 차이를 캡슐화하여 비즈니스 로직에서 플랫폼 의존성을 제거했습니다.
 
@@ -820,7 +845,7 @@ public static void OnAchievementUnlocked(int achievementIndex) {
 
 > - [AchievementEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/AchievementEventManager.cs)
 
-#### 유니티 분석
+#### 데이터 분석
 
 유저의 행동 데이터를 수집하여 게임 밸런스 조정 및 개선에 활용하기 위한 분석 모듈입니다. 수집된 로그는 Unity Dashboard의 **SQL Data Explorer**를 활용하여 복합적인 상관관계를 분석하는 데 사용됩니다.
 
@@ -844,7 +869,7 @@ public class UnityAnalyticsEvent : Event {
 
 > - [UnityAnalyticsManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/UnityAnalyticsManager.cs)
 
-#### 게임 초기화 로딩
+#### 로딩 시퀀스
 
 게임 시작 시 필요한 모든 리소스와 데이터를 순차적으로 로드하고 무결성을 점검하는 초기화 파이프라인입니다.
 
@@ -870,3 +895,11 @@ IEnumerator Start() {
 ```
 
 > - [LoadingSceneManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/LoadingSceneManager.cs)
+---
+### 개발 환경 개선
+
+#### DB 설계를 기반으로 Excel 위주의 워크플로우 구현
+
+#### 필요에 따른 외부 도구구현
+
+#### 에디터 확장 메소드를 통한 개발 프로세스
