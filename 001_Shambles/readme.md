@@ -204,13 +204,13 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 게임 내 텍스트 데이터의 동적 변환을 담당합니다. 주요 기능으로는 카드 설명에 포함된 동적 수치 태그(`#damage:`, `#shield:`, `#heal:` 등)를 파싱하여 현재 스탯 정보를 기반으로 실제 수치를 계산하고 색상이 적용된 문자열로 변환하는 기능, 텍스트에 흔들림이나 투명해지는 효과 등의 애니메이션을 적용하기 위한 태그 처리 기능, 각 팩션명에 고유한 폰트 스타일을 적용하기 위한 태그 파싱 기능, 그리고 대화나 UI 텍스트에서 플레이어 이름이 삽입되어야 하는 위치의 태그를 실제 이름으로 치환하는 기능 등의 메소드들을 제공합니다.
 
-수치값이 적용되기 전 텍스트
+> - 수치값이 적용되기 전 텍스트
+>
+>![Example_CardTextNormal](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextNormal.png)
 
-![Example_CardTextNormal](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextNormal.png)
-
-수치값이 적용된 후 텍스트
-
-![Example_CardTextParsed](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextParsed.png)
+> - 수치값이 적용된 후 텍스트
+>
+>![Example_CardTextParsed](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextParsed.png)
 
 > <details>
 > <summary>카드 설명의 수치 태그를 파싱하는 메소드</summary>
