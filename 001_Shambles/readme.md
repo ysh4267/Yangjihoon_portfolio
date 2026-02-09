@@ -439,47 +439,41 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 
 ```mermaid
 graph TD
-    graph LR
     classDef init fill:#e1f5fe,stroke:#01579b,color:black
     classDef player fill:#e8f5e9,stroke:#2e7d32,color:black
     classDef enemy fill:#ffebee,stroke:#c62828,color:black
     classDef buff fill:#fff3e0,stroke:#ef6c00,color:black
 
-    %% 버프 시스템 (전체 흐름 외부)
     Buffs["버프 / 장비 / 패시브"] --> EffectDB[("AddPhaseEffect<br/>(델리게이트 등록)")]
 
-    EffectDB -.-> P_TS_SB
-    EffectDB -.-> E_TS_SB
-    EffectDB -.-> BattleStart
 
-    %% 초기화 페이즈
-    subgraph InitPhase [초기화]
-        direction TB
-        Enter[전투 진입] --> BattleStart[BATTLE_START]
-    end
+        EffectDB[("AddPhaseEffect<br/>(델리게이트 등록)")]
 
-    %% 플레이어 턴
-    subgraph PlayerPhase [플레이어 턴]
-        direction TB
-        P_TS_SB[TURN_START_STAND_BY] --> P_TS[TURN_START]
-        P_TS --> P_Action[플레이어 행동 /<br/>카드 / 스킬사용]
-        P_Action --> P_TE_SB[TURN_END_STAND_BY]
-        P_TE_SB --> P_TE[TURN_END]
-    end
+        EffectDB -.-> P_TS_SB
+        EffectDB -.-> E_TS_SB
+        EffectDB -.-> BattleStart
 
-    %% 적 턴
-    subgraph EnemyPhase [적 턴]
-        direction TB
-        E_TS_SB[TURN_START_STAND_BY] --> E_TS[TURN_START]
-        E_TS --> E_Action[적 행동 패턴 진행<br/>Enemy1~3]
-        E_Action --> E_TE_SB[TURN_END_STAND_BY]
-        E_TE_SB --> E_TE[TURN_END]
-    end
+        subgraph InitPhase [초기화]
+            Enter[전투 진입] --> BattleStart[BATTLE_START]
+        end
 
-    %% 전체 흐름 연결
-    BattleStart --> P_TS_SB
-    P_TE --> E_TS_SB
-    E_TE --> P_TS_SB
+        subgraph PlayerPhase [플레이어 턴]
+            P_TS_SB[TURN_START_STAND_BY] --> P_TS[TURN_START]
+            P_TS --> P_Action[플레이어 행동 /<br/>카드 / 스킬사용]
+            P_Action --> P_TE_SB[TURN_END_STAND_BY]
+            P_TE_SB --> P_TE[TURN_END]
+        end
+
+        subgraph EnemyPhase [적 턴]
+            E_TS_SB[TURN_START_STAND_BY] --> E_TS[TURN_START]
+            E_TS --> E_Action[적 행동 패턴 진행<br/>Enemy1~3]
+            E_Action --> E_TE_SB[TURN_END_STAND_BY]
+            E_TE_SB --> E_TE[TURN_END]
+        end
+
+        BattleStart --> P_TS_SB
+        P_TE --> E_TS_SB
+        E_TE --> P_TS_SB
 
     class InitPhase init
     class PlayerPhase player
