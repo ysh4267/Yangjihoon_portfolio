@@ -93,26 +93,59 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 데이터 파일 관리와 DB 연결을 담당합니다. 게임 데이터, 플레이어 데이터, 유저 데이터 총 3개의 DB 파일을 관리하며, 각 DB에 대한 연결을 배열로 유지합니다. 연결이 닫혀있으면 자동으로 열고, DB 파일이 존재하지 않으면 StreamingAssets에서 복사하여 생성합니다. 씬이 언로드될 때 열려있는 모든 데이터 리더를 자동으로 종료하여 리소스 누수를 방지합니다.
 
-`IDisposable` 인터페이스를 구현하여 `using` 문과 함께 사용 시 자동으로 리소스를 해제합니다. SQL 쿼리를 실행하고 결과를 순회할 수 있는 `DataReader` 객체를 반환합니다. DB 연결이 닫혀있으면 자동으로 열고, DB 파일이 존재하지 않으면 StreamingAssets에서 복사하여 생성합니다. 오류 발생 시 에러 처리 후 복구를 시도합니다.
+`IDisposable` 인터페이스를 구현하여 메모리가 해제될 때 DB 연결을 확실하게 해제합니다. SQL 쿼리를 실행하고 결과를 순회할 수 있는 `DataReader` 객체를 반환합니다. DB 연결이 닫혀있으면 자동으로 열고, DB 파일이 존재하지 않으면 StreamingAssets에서 복사하여 생성합니다. 오류 발생 시 에러 처리 후 복구를 시도합니다.
 
 > <details>
 > <summary>SQLiteManager.SelectQuery</summary>
 >
 > ```csharp
-> public static CustomDataReader SelectQuery(string query, ENUM_DATABASE_PATH enumDataBasePath = ENUM_DATABASE_PATH.GAME_DATA) {
->     if (query == null) return null;
+> public class SQLiteManager : IDisposable {
+>     private static SqliteConnection[] connection = new SqliteConnection[3];
+>     
+>     // SQL 쿼리를 실행하고 결과를 순회할 수 있는 DataReader 객체를 반환
+>     public static CustomDataReader SelectQuery(string query, ENUM_DATABASE_PATH enumDataBasePath = ENUM_DATABASE_PATH.GAME_DATA) {
+>         if (query == null) return null;
 >
->     try {
->         OpenConnection(enumDataBasePath);
->         using (SqliteCommand cmd = new SqliteCommand(query, connection[(int)enumDataBasePath])) {
->             CustomDataReader customReader = new CustomDataReader(cmd.ExecuteReader());
->             readerList.Add(customReader);
->             return customReader;
+>         try {
+>             OpenConnection(enumDataBasePath);  // DB 연결 상태 확인 및 열기
+>             using (SqliteCommand cmd = new SqliteCommand(query, connection[(int)enumDataBasePath])) {
+>                 CustomDataReader customReader = new CustomDataReader(cmd.ExecuteReader());
+>                 readerList.Add(customReader);  // 리소스 관리를 위해 리스트에 추가
+>                 return customReader;
+>             }
+>         }
+>         catch (Exception e) {
+>             // ... (에러 핸들링 및 DB 복구 로직 생략)
+>             return null;
 >         }
 >     }
->     catch (Exception e) {
->         // ... (에러 핸들링 및 DB 복구 로직 생략)
->         return null;
+>     
+>     // 모든 DB 연결을 안전하게 해제
+>     public void Dispose() {
+>         if (connection != null) {
+>             for (int i = 0; i < connection.Length; i++) {
+>                 if (connection[i] != null) {
+>                     connection[i].Close();
+>                     connection[i] = null;
+>                 }
+>             }
+>             connection = null;
+>         }
+>     }
+> }
+>
+> // 사용 예제 - CardDao에서 카드 데이터 조회
+> public class CardDao {
+>     public static Card GetCard(int cardIndex) {
+>         string query = $"SELECT ... FROM {DataBaseTableDefine.CardTable} " +
+>                        $"LEFT JOIN {DataBaseTableDefine.CardNameTable} ...";
+>         
+>         CustomDataReader it = SQLiteManager.SelectQuery(query);  // 쿼리 실행
+>         Card card = new Card();
+>         card.Index = it.GetSafeValue<int>(0);       // 컬럼 인덱스로 값 추출
+>         card.cost = it.GetSafeValue<int>(1);
+>         card.Name = it.GetSafeValue<string>(5);
+>         return card;
 >     }
 > }
 > ```
@@ -129,19 +162,20 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 > <summary>DataReader.GetSafeValue</summary>
 >
 > ```csharp
+> // DB 컬럼 값을 제네릭 타입으로 안전하게 변환. DBNull 처리와 Nullable 타입 변환을 자동으로 수행.
 > public T GetSafeValue<T>(int colIndex) {
->     object theValue = dataReader.GetValue(colIndex);
->     Type theValueType = typeof(T);
->     if (DBNull.Value != theValue) {
+>     object theValue = dataReader.GetValue(colIndex);  // 지정된 컬럼의 값을 가져옴
+>     Type theValueType = typeof(T);  // 요청된 반환 타입 정보 획득
+>     if (DBNull.Value != theValue) {  // 값이 DBNull이 아닌 경우에만 변환 수행
 >         if (false == IsNullableType(theValueType)) {
->             return (T)Convert.ChangeType(theValue, theValueType);
+>             return (T)Convert.ChangeType(theValue, theValueType);  // 일반 타입은 직접 변환
 >         }
 >         else {
 >             NullableConverter theNullableConverter = new NullableConverter(theValueType);
->             return (T)Convert.ChangeType(theValue, theNullableConverter.UnderlyingType);
+>             return (T)Convert.ChangeType(theValue, theNullableConverter.UnderlyingType);  // Nullable 타입은 내부 타입으로 변환
 >         }
 >     }
->     return default;
+>     return default;  // DBNull인 경우 타입의 기본값 반환
 > }
 > ```
 >
@@ -155,12 +189,13 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 > <summary>TextParser.ParseStatusBasedCardDescriptionText</summary>
 >
 > ```csharp
+> // 카드 설명 텍스트의 동적 수치 태그를 파싱하여 현재 스탯 기반 값으로 변환. 버프/디버프 상태를 색상으로 구분.
 > public static string ParseStatusBasedCardDescriptionText(this string rawText, int[] status, Card card) {
->     foreach (var item in textList) {
->         if (item.Contains(damageTag) || item.Contains(shieldTag) || item.Contains(healTag)) {
->             int baseValue = int.Parse(temp[temp.Length - 1]);
->             int calcValue = Mathf.FloorToInt(StatusCalc(item, card.cardFactionEnum, baseValue));
->             result += calcValue.ColoredStringValueWithValue(baseValue);
+>     foreach (var item in textList) {  // 텍스트 내 모든 태그를 순회
+>         if (item.Contains(damageTag) || item.Contains(shieldTag) || item.Contains(healTag)) {  // 수치 관련 태그 확인
+>             int baseValue = int.Parse(temp[temp.Length - 1]);  // 태그에서 기본 수치 추출
+>             int calcValue = Mathf.FloorToInt(StatusCalc(item, card.cardFactionEnum, baseValue));  // 스탯 적용하여 최종 수치 계산
+>             result += calcValue.ColoredStringValueWithValue(baseValue);  // 기본값 대비 색상 적용된 문자열 생성
 >         }
 >     }
 >     return result;
@@ -176,67 +211,58 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 ### 1.2. Data Transfer Object (DTO)
 
-물리적인 DB I/O 발생과 네트워크 환경에 따른 성능 저하를 방지하고자 데이터 객체 구조를 이원화하여 설계했습니다.
-
-* **메인 데이터 DTO**
-    * 단일 쿼리로 모델의 모든 속성을 Fetch합니다.
-    * 초기 로딩 시 데이터 통신 횟수(Round-trip)를 최소화하여 대량의 데이터를 한 번의 비용으로 수집합니다.
-* **최적화된 DTO**
-    * 식별자와 실시간 동기화가 필요한 필수 상태값만 포함합니다.
-    * 빈번한 업데이트나 대규모 인덱싱 작업 시 발생하는 I/O 부하를 최적화합니다.
-* **다형성 기반 인터페이스 설계**
-    * 공통 인터페이스를 통해 서로 다른 타입의 DTO들을 일관된 방식으로 처리합니다.
-    * 카드, 장비, 버프 등 다양한 게임 오브젝트가 동일한 인터페이스를 상속받아 통합 관리됩니다.
-    * 새로운 DTO 타입 추가 시 기존 로직 수정 없이 확장이 가능합니다.
+물리적인 DB I/O 발생과 네트워크 환경에 따른 성능 저하를 방지하고자 데이터 객체 구조를 이원화하여 설계했습니다. 메인 데이터 DTO는 단일 쿼리로 모델의 모든 속성을 Fetch하여 초기 로딩 시 데이터 통신 횟수를 최소화합니다. 최적화된 DTO는 식별자와 필수 상태값만 포함하여 빈번한 업데이트나 대규모 인덱싱 작업 시 I/O 부하를 최소화합니다. 다형성 기반 인터페이스 설계를 통해 카드, 장비, 버프 등 다양한 게임 오브젝트가 동일한 인터페이스를 상속받아 통합 관리되며, 새로운 DTO 타입 추가 시 기존 로직 수정 없이 확장이 가능합니다.
 
 ```csharp
-// 메인 데이터 - 여러 DAO를 통해 조합되는 완전한 데이터 객체
+// 메인 데이터 DTO - 여러 DAO를 통해 조합되는 완전한 데이터 객체. 초기 로딩 시 한 번의 비용으로 모든 데이터를 수집.
 public class PlayerInfo {
+    // 기본 플레이어 정보 - DB에서 직접 로드되는 단순 데이터
     public string name;
-    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 단순 데이터
+    public int statHp, statStr, statInt, statDex, gold, level, exp;
     
-    // 여러 DAO를 거쳐 클래스 형태로 로드되는 복합 데이터
-    public Skill playerSkill;                                    // SkillDao.GetSkill(index)
-    public StarterPack starterPack;                              // StarterPackDao.GetStarterPack(index)
-    public Portrait portrait;                                    // PortraitDao.GetPortrait(index)
-    public Dictionary<ENUM_EQUIPMENT_PART, Equipment> equipmentStatusDict;  // EquipmentDao.GetEquipment(index)
-    public List<Card> cardDeckList;                              // CardDao.GetCard(index)
-    public List<Area> clearedAreaList;                           // AreaDao.GetArea(index)
+    // 복합 데이터 - 여러 DAO를 거쳐 클래스 형태로 로드됨
+    public Skill playerSkill;                                    // SkillDao.GetSkill(index) 호출
+    public StarterPack starterPack;                              // StarterPackDao.GetStarterPack(index) 호출
+    public Portrait portrait;                                    // PortraitDao.GetPortrait(index) 호출
+    public Dictionary<ENUM_EQUIPMENT_PART, Equipment> equipmentStatusDict;  // EquipmentDao.GetEquipment(index) 호출
+    public List<Card> cardDeckList;                              // CardDao.GetCard(index) 호출
+    public List<Area> clearedAreaList;                           // AreaDao.GetArea(index) 호출
     // ...
 }
 
-// 최적화된 DTO - 인덱스만 포함하여 경량화
+// 최적화된 DTO - 인덱스만 포함하여 경량화된 데이터 객체. 빈번한 업데이트나 대규모 인덱싱 작업 시 I/O 부하를 최소화.
 public class PlayerRawInfo {
+    // 기본 플레이어 정보 - PlayerInfo와 동일한 단순 데이터
     public string name;
-    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 동일한 단순 데이터
+    public int statHp, statStr, statInt, statDex, gold, level, exp;
     
-    // 클래스 대신 인덱스만 저장하여 I/O 최소화
-    public int playerSkillIndex;
-    public int? starterPackIndex;
-    public int? portraitIndex;
-    public int?[] equipedEquipment;                              // 인덱스 배열
-    public List<CardLiteDBData> playerDeckIndexList;             // 경량화된 카드 데이터
-    public List<int> clearedAreaIndexList;                       // 인덱스만 저장
+    // 경량화된 참조 데이터 - 클래스 대신 인덱스만 저장
+    public int playerSkillIndex;                                 // 스킬 인덱스만 저장
+    public int? starterPackIndex;                                // Nullable - 미설정 가능
+    public int? portraitIndex;                                   // Nullable - 미설정 가능
+    public int?[] equipedEquipment;                              // 장비 인덱스 배열
+    public List<CardLiteDBData> playerDeckIndexList;             // 경량화된 카드 데이터 구조체
+    public List<int> clearedAreaIndexList;                       // 완료된 지역 인덱스 리스트
     // ...
 }
 ```
 
 ```csharp
-// 인덱스 기반 DTO
+// 인덱스 기반 DTO 인터페이스 - 모든 데이터 객체의 기본 식별자 제공
 public interface IIndexableDTO {
-    int Index { get; set; }
+    int Index { get; set; }  // DB 테이블의 Primary Key와 매핑
 }
 
-// UI 렌더링용 DTO
+// UI 렌더링용 DTO 인터페이스 - 화면에 표시되는 모든 객체의 공통 속성 정의
 public interface IRenderableData : IIndexableDTO {
-    enum ItemType { card, skill, equipment, starterPack, portrait, buff }
-    public ItemType datatype { get; set; }
-    public Illustration Illust { get; set; }
+    enum ItemType { card, skill, equipment, starterPack, portrait, buff }  // 렌더링 대상 타입 열거
+    public ItemType datatype { get; set; }  // 객체의 렌더링 타입 식별
+    public Illustration Illust { get; set; }  // UI에 표시될 일러스트 데이터
 }
 
-// 카드 인터페이스
+// 카드 인터페이스 - IRenderableData와 IRarity를 상속받아 카드 고유 속성 정의
 public interface ICard : IRenderableData, IRarity {
-    public ENUM_CARD_TYPE CardType { get; set; }
+    public ENUM_CARD_TYPE CardType { get; set; }  // 카드 타입 (공격, 방어, 스킬 등)
 }
 ```
 
@@ -246,17 +272,14 @@ public interface ICard : IRenderableData, IRarity {
 
 ### 1.3. Data Access Object (DAO)
 
-DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직과 데이터 접근을 분리합니다. 각 데이터 모델별로 전용 DAO 클래스를 구성하여 관련 쿼리와 파싱 로직을 집중 관리합니다. 특히 C#의 Boxing/Unboxing 과정에서 발생하는 성능 부하를 최소화하기 위해, 데이터 변환 로직을 쿼리 단계에서 처리하도록 DAO를 전문화하여 런타임 오버헤드를 줄였습니다.
-
-* **테이블명 상수화**: 테이블 이름은 `TableDefine` Enum으로 정의하여 오타를 방지하고 일관성을 유지합니다.
-* **다양한 쿼리 메소드**: 단일 조회, 전체 조회, 조건별 필터링 등 상황에 맞는 최적의 쿼리 메소드를 제공합니다.
-* **리소스 관리**: `DataReader`는 `using` 문 내에서 호출하여 사용 후 자동으로 리소스를 해제합니다.
-* **쿼리 최적화**: LEFT JOIN을 활용하여 관련 데이터를 단일 쿼리로 조회하고, 불필요한 Round-trip을 최소화합니다.
+DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직과 데이터 접근을 분리합니다. 각 데이터 모델별로 전용 DAO 클래스를 구성하여 관련 쿼리와 파싱 로직을 집중 관리합니다. 테이블 이름은 `TableDefine` Enum으로 상수화하여 오타를 방지하고 일관성을 유지하며, 단일 조회, 전체 조회, 조건별 필터링 등 상황에 맞는 최적의 쿼리 메소드를 제공합니다. LEFT JOIN을 활용하여 관련 데이터를 단일 쿼리로 조회하고 불필요한 Round-trip을 최소화하며, C#의 Boxing/Unboxing 과정에서 발생하는 성능 부하를 최소화하기 위해 데이터 변환 로직을 쿼리 단계에서 처리하도록 DAO를 전문화하여 런타임 오버헤드를 줄였습니다.
 
 ```csharp
+// 카드 데이터 접근 객체 - 카드 관련 쿼리 로직을 캡슐화. LEFT JOIN을 활용하여 관련 테이블을 단일 쿼리로 조회.
 public class CardDao : CollectionDao {
-    // 단일 카드 조회 - CardTable + CardNameTable + CardTypeTable + ... LEFT JOIN
+    // UI 표시용 카드 객체를 반환. 여러 테이블을 LEFT JOIN하여 단일 쿼리로 조회.
     public static Card GetCard(int cardIndex) {
+        // 카드 기본 정보 + 이름 + 타입 테이블을 JOIN하여 조회
         string query =
             $"SELECT ... FROM {DataBaseTableDefine.CardTable} " +
             $"LEFT JOIN {DataBaseTableDefine.CardNameTable} " +
@@ -264,29 +287,30 @@ public class CardDao : CollectionDao {
             $"LEFT JOIN {DataBaseTableDefine.CardTypeTable} ... " +
             $"WHERE {DataBaseTableDefine.CardTable}.card_index = {cardIndex}";
         
-        DataReader it = SQLiteManager.SelectQuery(query);
-        Card card = new Card();
-        card.Illust = IllustrationDao.GetIllust(it.GetSafeValue<int>(2));  // 다른 DAO 호출
-        // ...
+        DataReader it = SQLiteManager.SelectQuery(query);  // 쿼리 실행 및 DataReader 획득
+        Card card = new Card();  // 새 카드 객체 생성
+        card.Illust = IllustrationDao.GetIllust(it.GetSafeValue<int>(2));  // 일러스트 DAO를 통해 이미지 로드
+        // ... (추가 필드 매핑)
         return card;
     }
     
-    // 전투용 카드 조회 - GetCard() 호출 후 스크립트 테이블에서 추가 데이터 로드
+    // 전투에서 사용할 카드 객체를 반환. GetCard() 호출 후 스크립트를 동적 생성.
     public static Card GetBattleCard(int cardIndex) {
         Card card = GetCard(cardIndex);  // 기본 카드 데이터 재사용
-        card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(...);
+        card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(...);  // 클래스명으로 스크립트 인스턴스 생성
         return card;
     }
     
-    // 해금된 카드 조회 - UnlockedCardTable(유저 DB)에서 인덱스 조회 후 GetCard() 호출
+    // 해금된 모든 카드 목록을 반환. USER_DATA DB에서 조회.
     public static List<Card> GetUnlockedCardList() {
+        // 유저 DB의 해금 테이블에서 해금된 카드 인덱스만 조회
         string query = $"SELECT card_index FROM {DataBaseTableDefine.UnlockedCardTable} " +
                        $"WHERE is_unlocked = 'true'";
-        DataReader it = SQLiteManager.SelectQuery(query, ENUM_DATABASE_PATH.USER_DATA);
-        // 각 인덱스로 GetCard() 호출하여 카드 객체 생성
+        DataReader it = SQLiteManager.SelectQuery(query, ENUM_DATABASE_PATH.USER_DATA);  // 유저 DB 지정
+        // 조회된 각 인덱스로 GetCard() 호출하여 카드 객체 리스트 생성
     }
     
-    // 카드 타입 텍스트 조회 - CardTypeTable 단독 조회
+    // 카드 타입의 현지화된 텍스트를 반환
     public static string GetCardTypeText(ENUM_CARD_TYPE cardType) { ... }
 }
 ```
