@@ -53,14 +53,14 @@
 
 ## 1. 데이터베이스
 
-> 초기 개발 단계에서는 JSON과 유니티 Prefab을 이용해 데이터를 관리했으나, **텍스트 RPG** 장르 특성상 다국어 지원이 추가됨에 따라 데이터 분량이 기하급수적으로 증가했고, 이로 인해 로딩 지연과 데이터 관리의 어려움이 발생했습니다.
->
-> 이를 해결하기 위해 서버 없이 로컬 파일만으로 기존 시스템을 수행할 수 있는 여러 대안을 찾던 중 SQLite를 선택했습니다. 기존 데이터 구조를 바탕으로 ERD를 작성 후 데이터의 성격과 생명주기에 따라 데이터 타입을 분류한 뒤, 게임 중에는 수정되지 않는 정적 데이터로 이루어진 **Game Data**, 매 플레이마다 초기화되는 **Player Data**, 그리고 플레이 내내 누적되는 **User Data**의 3가지 데이터베이스 파일을 생성하여 관리하도록 구현했습니다.
-
 메인 게임 데이터 관리에는 **SQLite**를 사용합니다. 데이터베이스 시스템은 세 가지 핵심 컴포넌트로 구성됩니다:
 - **DataReader**: `SqliteDataReader`를 래핑하여 타입 안전 변환, Enum 자동 매칭, 리소스 자동 관리 기능 제공
 - **DTO**: 메인 데이터 DTO와 최적화된 DTO로 이원화하여 초기 로딩과 런타임 성능을 모두 확보
 - **DAO**: 테이블별 전용 클래스로 쿼리 로직을 캡슐화하고, Boxing/Unboxing 오버헤드 최소화
+
+> 초기 개발 단계에서는 JSON과 유니티 Prefab을 이용해 데이터를 관리했으나, **텍스트 RPG** 장르 특성상 다국어 지원이 추가됨에 따라 데이터 분량이 기하급수적으로 증가했고, 이로 인해 로딩 지연과 데이터 관리의 어려움이 발생했습니다.
+>
+> 이를 해결하기 위해 서버 없이 로컬 파일만으로 기존 시스템을 수행할 수 있는 여러 대안을 찾던 중 SQLite를 선택했습니다. 기존 데이터 구조를 바탕으로 ERD를 작성 후 데이터의 성격과 생명주기에 따라 데이터 타입을 분류한 뒤, 게임 중에는 수정되지 않는 정적 데이터로 이루어진 **Game Data**, 매 플레이마다 초기화되는 **Player Data**, 그리고 플레이 내내 누적되는 **User Data**의 3가지 데이터베이스 파일을 생성하여 관리하도록 구현했습니다.
 
 아래 시퀀스 다이어그램은 게임 로직에서 데이터를 요청할 때의 흐름을 나타냅니다. DAO가 쿼리를 작성하여 SQLiteManager에 전달하고, 반환된 DataReader로 원시 데이터를 파싱하여 DTO 객체로 변환합니다.
 
@@ -170,9 +170,9 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 #### 1.1.2. DataReader
 
-> 초기 구현 시에는 Mono.Data.Sqlite 라이브러리에서 제공하는 기본 클래스인 `SqliteDataReader`를 바로 사용하려 하였으나, `DBNull` 처리, 타입 변환, 리소스 해제 등의 문제가 있어 해당 이슈를 관리하기 위해 이를 감싸는 `DataReader` 래퍼 클래스를 구현했습니다.
+Mono.Data.Sqlite 라이브러리에서 제공하는 `SqliteDataReader`를 래핑하여 안전한 데이터 접근과 다양한 타입 변환을 제공합니다. 핵심 메서드인 `GetSafeValue<T>`는 DB 컬럼 값을 제네릭 타입으로 안전하게 변환합니다. 먼저 값이 `DBNull`인지 확인하고, `DBNull`이면 해당 타입의 기본값을 반환합니다. 값이 존재하면 요청된 타입이 `Nullable`인지 검사하여, 일반 타입이면 `Convert.ChangeType`으로 직접 변환하고, `Nullable` 타입이면 `NullableConverter`를 통해 내부 타입으로 변환 후 반환합니다. 이 외에도 문자열을 Enum으로 변환하는 `GetEnumFromString<T>`, CSV 데이터를 파싱하는 `GetTextValueToIntList` 등의 유틸리티 메서드를 제공합니다.
 
-`SqliteDataReader`를 래핑하여 안전한 데이터 접근과 다양한 타입 변환을 제공합니다. 핵심 메서드인 `GetSafeValue<T>`는 DB 컬럼 값을 제네릭 타입으로 안전하게 변환합니다. 먼저 값이 `DBNull`인지 확인하고, `DBNull`이면 해당 타입의 기본값을 반환합니다. 값이 존재하면 요청된 타입이 `Nullable`인지 검사하여, 일반 타입이면 `Convert.ChangeType`으로 직접 변환하고, `Nullable` 타입이면 `NullableConverter`를 통해 내부 타입으로 변환 후 반환합니다. 이 외에도 문자열을 Enum으로 변환하는 `GetEnumFromString<T>`, CSV 데이터를 파싱하는 `GetTextValueToIntList` 등의 유틸리티 메서드를 제공합니다.
+> 초기 구현 시에는 Mono.Data.Sqlite 라이브러리에서 제공하는 기본 클래스인 `SqliteDataReader`를 바로 사용하려 하였으나, `DBNull` 처리, 타입 변환, 리소스 해제 등의 문제가 있어 해당 이슈를 관리하기 위해 이를 감싸는 `DataReader` 래퍼 클래스를 구현했습니다.
 
 > <details>
 > <summary>데이터를 타입을 안전하게 변환</summary>
@@ -238,6 +238,10 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 물리적인 DB I/O 발생과 네트워크 환경에 따른 성능 저하를 방지하고자 데이터 객체 구조를 이원화하여 설계했습니다.
 
+> 초기 구현 시에는 메인 데이터 DTO만을 사용하여 구현했습니다. 그러나 `PlayerInfo`를 여러 번 호출하는 상황에서 게임 프레임이 간헐적으로 튀는 현상이 발생했습니다. SQLite의 읽기/쓰기 속도가 문제인가 싶어 Unity Profiler로 모니터링하여 확인해봤으나, 통신 속도는 10만 TPS 이상으로 문제가 없었습니다.
+>
+> 이후 DB에서 읽어온 데이터를 객체로 변환하는 Boxing/Unboxing 과정을 의심했고, 실제로 해당 부분에서 예상보다 많은 시간이 소요되는 것을 확인했습니다. 이를 해결하기 위해 LEFT JOIN을 활용하여 단일 쿼리로 데이터를 조회하고, Boxing 과정이 필요 없는 기본 타입만으로 구성된 경량화된 DTO를 별도로 설계하여 사용하기 시작했습니다.
+
 * **메인 데이터 DTO**
     * 단일 쿼리로 모델의 모든 속성을 Fetch합니다.
     * 초기 로딩 시 데이터 통신 횟수(Round-trip)를 최소화하여 대량의 데이터를 한 번의 비용으로 수집합니다.
@@ -249,59 +253,74 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
     * 카드, 장비, 버프 등 다양한 게임 오브젝트가 동일한 인터페이스를 상속받아 통합 관리됩니다.
     * 새로운 DTO 타입 추가 시 기존 로직 수정 없이 확장이 가능합니다.
 
-```csharp
-// 메인 데이터 - 여러 DAO를 통해 조합되는 완전한 데이터 객체
-public class PlayerInfo {
-    public string name;
-    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 단순 데이터
-    
-    // 여러 DAO를 거쳐 클래스 형태로 로드되는 복합 데이터
-    public Skill playerSkill;                                    // SkillDao.GetSkill(index)
-    public StarterPack starterPack;                              // StarterPackDao.GetStarterPack(index)
-    public Portrait portrait;                                    // PortraitDao.GetPortrait(index)
-    public Dictionary<ENUM_EQUIPMENT_PART, Equipment> equipmentStatusDict;  // EquipmentDao.GetEquipment(index)
-    public List<Card> cardDeckList;                              // CardDao.GetCard(index)
-    public List<Area> clearedAreaList;                           // AreaDao.GetArea(index)
-    // ...
-}
-
-// 최적화된 DTO - 인덱스만 포함하여 경량화
-public class PlayerRawInfo {
-    public string name;
-    public int statHp, statStr, statInt, statDex, gold, level, exp;  // 동일한 단순 데이터
-    
-    // 클래스 대신 인덱스만 저장하여 I/O 최소화
-    public int playerSkillIndex;
-    public int? starterPackIndex;
-    public int? portraitIndex;
-    public int?[] equipedEquipment;                              // 인덱스 배열
-    public List<CardLiteDBData> playerDeckIndexList;             // 경량화된 카드 데이터
-    public List<int> clearedAreaIndexList;                       // 인덱스만 저장
-    // ...
-}
-```
-
-```csharp
-// 인덱스 기반 DTO
-public interface IIndexableDTO {
-    int Index { get; set; }
-}
-
-// UI 렌더링용 DTO
-public interface IRenderableData : IIndexableDTO {
-    enum ItemType { card, skill, equipment, starterPack, portrait, buff }
-    public ItemType datatype { get; set; }
-    public Illustration Illust { get; set; }
-}
-
-// 카드 인터페이스
-public interface ICard : IRenderableData, IRarity {
-    public ENUM_CARD_TYPE CardType { get; set; }
-}
-```
-
+> <details>
+> <summary>DTO 클래스 예제</summary>
+>
+> <br>
+>
 > - [Data Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Class)
+>
+> ```csharp
+> // 메인 데이터 DTO - 여러 DAO를 통해 조합되는 완전한 데이터 객체
+> public class PlayerInfo {
+>     public string name;
+>     public int statHp, statStr, statInt, statDex, gold, level, exp;  // 단순 데이터
+>     
+>     // 여러 DAO를 거쳐 클래스 형태로 로드되는 복합 데이터
+>     public Skill playerSkill;                                    // SkillDao.GetSkill(index)
+>     public StarterPack starterPack;                              // StarterPackDao.GetStarterPack(index)
+>     public Portrait portrait;                                    // PortraitDao.GetPortrait(index)
+>     public Dictionary<ENUM_EQUIPMENT_PART, Equipment> equipmentStatusDict;  // EquipmentDao.GetEquipment(index)
+>     public List<Card> cardDeckList;                              // CardDao.GetCard(index)
+>     public List<Area> clearedAreaList;                           // AreaDao.GetArea(index)
+>     // ...
+> }
+>
+> // 최적화된 DTO - 인덱스만 포함하여 경량화
+> public class PlayerRawInfo {
+>     public string name;
+>     public int statHp, statStr, statInt, statDex, gold, level, exp;  // 동일한 단순 데이터
+>     
+>     // 클래스 대신 인덱스만 저장하여 I/O 최소화
+>     public int playerSkillIndex;
+>     public int? starterPackIndex;
+>     public int? portraitIndex;
+>     public int?[] equipedEquipment;                              // 인덱스 배열
+>     public List<CardLiteDBData> playerDeckIndexList;             // 경량화된 카드 데이터
+>     public List<int> clearedAreaIndexList;                       // 인덱스만 저장
+>     // ...
+> }
+> ```
+>
+> </details>
+
+> <details>
+> <summary>DTO 인터페이스 예제</summary>
+>
+> <br>
+>
 > - [Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Interface)
+>
+> ```csharp
+> // 인덱스 기반 DTO - 모든 DTO의 기본 인터페이스
+> public interface IIndexableDTO {
+>     int Index { get; set; }
+> }
+>
+> // UI 렌더링용 DTO - 화면 표시에 필요한 데이터 정의
+> public interface IRenderableData : IIndexableDTO {
+>     enum ItemType { card, skill, equipment, starterPack, portrait, buff }
+>     public ItemType datatype { get; set; }
+>     public Illustration Illust { get; set; }
+> }
+>
+> // 카드 인터페이스 - 카드 타입별 분류
+> public interface ICard : IRenderableData, IRarity {
+>     public ENUM_CARD_TYPE CardType { get; set; }
+> }
+> ```
+>
+> </details>
 
 
 ### 1.3. Data Access Object (DAO)
@@ -313,45 +332,52 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 * **리소스 관리**: `DataReader`는 `using` 문 내에서 호출하여 사용 후 자동으로 리소스를 해제합니다.
 * **쿼리 최적화**: LEFT JOIN을 활용하여 관련 데이터를 단일 쿼리로 조회하고, 불필요한 Round-trip을 최소화합니다.
 
-```csharp
-public class CardDao : CollectionDao {
-    // 단일 카드 조회 - CardTable + CardNameTable + CardTypeTable + ... LEFT JOIN
-    public static Card GetCard(int cardIndex) {
-        string query =
-            $"SELECT ... FROM {DataBaseTableDefine.CardTable} " +
-            $"LEFT JOIN {DataBaseTableDefine.CardNameTable} " +
-            $"ON {DataBaseTableDefine.CardTable}.card_index = {DataBaseTableDefine.CardNameTable}.card_index " +
-            $"LEFT JOIN {DataBaseTableDefine.CardTypeTable} ... " +
-            $"WHERE {DataBaseTableDefine.CardTable}.card_index = {cardIndex}";
-        
-        DataReader it = SQLiteManager.SelectQuery(query);
-        Card card = new Card();
-        card.Illust = IllustrationDao.GetIllust(it.GetSafeValue<int>(2));  // 다른 DAO 호출
-        // ...
-        return card;
-    }
-    
-    // 전투용 카드 조회 - GetCard() 호출 후 스크립트 테이블에서 추가 데이터 로드
-    public static Card GetBattleCard(int cardIndex) {
-        Card card = GetCard(cardIndex);  // 기본 카드 데이터 재사용
-        card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(...);
-        return card;
-    }
-    
-    // 해금된 카드 조회 - UnlockedCardTable(유저 DB)에서 인덱스 조회 후 GetCard() 호출
-    public static List<Card> GetUnlockedCardList() {
-        string query = $"SELECT card_index FROM {DataBaseTableDefine.UnlockedCardTable} " +
-                       $"WHERE is_unlocked = 'true'";
-        DataReader it = SQLiteManager.SelectQuery(query, ENUM_DATABASE_PATH.USER_DATA);
-        // 각 인덱스로 GetCard() 호출하여 카드 객체 생성
-    }
-    
-    // 카드 타입 텍스트 조회 - CardTypeTable 단독 조회
-    public static string GetCardTypeText(ENUM_CARD_TYPE cardType) { ... }
-}
-```
-
+> <details>
+> <summary>DAO 클래스 예제</summary>
+>
+> <br>
+>
 > - [DAO Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
+>
+> ```csharp
+> public class CardDao : CollectionDao {
+>     // 단일 카드 조회 - LEFT JOIN으로 여러 테이블 결합
+>     public static Card GetCard(int cardIndex) {
+>         string query =
+>             $"SELECT ... FROM {DataBaseTableDefine.CardTable} " +
+>             $"LEFT JOIN {DataBaseTableDefine.CardNameTable} " +
+>             $"ON {DataBaseTableDefine.CardTable}.card_index = {DataBaseTableDefine.CardNameTable}.card_index " +
+>             $"LEFT JOIN {DataBaseTableDefine.CardTypeTable} ... " +
+>             $"WHERE {DataBaseTableDefine.CardTable}.card_index = {cardIndex}";
+>         
+>         DataReader it = SQLiteManager.SelectQuery(query);  // 쿼리 실행
+>         Card card = new Card();
+>         card.Illust = IllustrationDao.GetIllust(it.GetSafeValue<int>(2));  // 다른 DAO 호출
+>         // ...
+>         return card;
+>     }
+>     
+>     // 전투용 카드 조회 - 기본 카드 데이터에 스크립트 추가
+>     public static Card GetBattleCard(int cardIndex) {
+>         Card card = GetCard(cardIndex);  // 기본 카드 데이터 재사용
+>         card.battleCardScript = (IBattlePlayerCard)Activator.CreateInstance(...);  // 동적 인스턴스 생성
+>         return card;
+>     }
+>     
+>     // 해금된 카드 조회 - 유저 DB에서 인덱스 조회 후 GetCard() 호출
+>     public static List<Card> GetUnlockedCardList() {
+>         string query = $"SELECT card_index FROM {DataBaseTableDefine.UnlockedCardTable} " +
+>                        $"WHERE is_unlocked = 'true'";
+>         DataReader it = SQLiteManager.SelectQuery(query, ENUM_DATABASE_PATH.USER_DATA);  // 유저 DB 조회
+>         // 각 인덱스로 GetCard() 호출하여 카드 객체 생성
+>     }
+>     
+>     // 카드 타입 텍스트 조회 - 단일 테이블 조회
+>     public static string GetCardTypeText(ENUM_CARD_TYPE cardType) { ... }
+> }
+> ```
+>
+> </details>
 
 
 
