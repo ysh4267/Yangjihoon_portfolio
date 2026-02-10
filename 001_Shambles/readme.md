@@ -39,8 +39,8 @@
 * [2. 전투 시스템](#2-전투-시스템)
     * [2.1. BattleManager](#2-1-battlemanager)
     * [2.2. BattlePhaseManager](#2-2-battlephasemanager)
-    * [2.3. BattleEnemyManager](#2-3-battleenemymanager)
-    * [2.4. BattleEventManager](#2-4-battleeventmanager)
+    * [2.3. BattleEventManager](#2-3-battleeventmanager)
+    * [2.4. BattleEnemyManager](#2-4-battleenemymanager)
     * [2.5. 스테이터스 시스템](#2-5-스테이터스-시스템)
     * [2.6. 전투 로직](#2-6-전투-로직)
 * [3. UI](#3-ui)
@@ -398,7 +398,7 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 
 ### 2.1. BattleManager
 
-전투 시스템의 핵심 싱글톤 매니저 클래스입니다. 전투 진행에 필요한 모든 서브 매니저와 UI 컴포넌트를 통합 관리합니다.
+전투 시스템의 핵심 싱글톤 매니저 클래스입니다. 전투 진행에 필요한 모든 서브 매니저와 UI 컴포넌트를 통합 관리하며, `Start` 메서드에서 각 서브 매니저와 구성 요소를 순차적으로 초기화하는 워터폴 방식을 채택하여 매니저 간의 의존성 문제를 해결하고 초기화 순서를 보장했습니다.
 
 * **서브 매니저 통합**: `BattlePhaseManager`, `BattleEnemyManager`, `BattleEventManager`, `BattleCardManager` 등 모든 전투 관련 매니저를 소유
 * **전투 상태 관리**: 전투 시작/종료 조건 확인, 승리/패배 처리
@@ -421,6 +421,16 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 >     [SerializeField] public BattleEventManager battleEventManager = null;   // 이벤트 델리게이트
 >     [SerializeField] public BattleCardManager battleCardManager = null;     // 카드 관리
 >     // ...
+>
+>     void Start() {
+>         // ... (전투 데이터 로드 및 랜덤 시드 초기화)
+>
+>         battlePlayerObject.Initialize();
+>         battleEnemyManager.InitializeEnemyList(battleData.enemyList);
+>         battleCardManager.InitializeCardManager();
+>
+>         // ... (BGM 재생 및 전투 시작 코루틴 실행)
+>     }
 > }
 > ```
 >
@@ -428,14 +438,94 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 
 ### 2.2. BattlePhaseManager
 
-전투 페이즈 흐름을 제어하는 매니저 클래스입니다. 턴 시작/종료, 전투 시작/종료 등 페이즈별 등록된 델리게이트를 실행하고 콜렉터를 관리합니다.
+전투 페이즈 흐름과 턴 사이클을 제어하는 매니저 클래스입니다. 옵저버 패턴을 기반으로 설계되어, 턴 시작/종료, 전투 시작/종료 시점뿐만 아니라 카드 사용, 공격, 데미지, 추가 효과 등 특정 행위 시점에 따른 페이즈 이벤트를 관리하며, 등록된 델리게이트를 실행하고 콜렉터를 관리합니다.
 
 * **페이즈 델리게이트 시스템**: `IBattlePhaseEffect` 인터페이스를 통해 버프, 장비, 패시브 등이 특정 페이즈에 동작을 등록
 * **타겟-액션 조합**: `(ENUM_BATTLE_PHASE_TARGET, ENUM_BATTLE_PHASE_ACTION)` 튜플 키로 등록된 동작 관리
 * **일회용 페이즈 동작**: n턴 후 자동 실행 및 제거되는 `DisposablePhaseEffect` 지원
 * **페이즈 콜렉터**: 특정 시점 사이에 발생한 이벤트를 수집하여 카운트 기반 로직 구현
 
-아래 플로우차트는 메인 전투 루프의 실행 흐름을 나타냅니다. 전투 진입 시 초기화 과정을 거쳐 플레이어와 적이 턴을 교차하며, 턴 시작/행동/종료 단계로 세분화된 페이즈 이벤트를 순차적으로 실행합니다. 이때 `AddPhaseEffect`를 통해 버프 및 아이템 효과가 특정 페이즈에 동적으로 등록되며, 턴 사이클 관리 로직이 턴 전환 및 승패 조건을 지속적으로 체크하여 전투 흐름을 제어합니다.
+> <details>
+> <summary>페이즈 이펙트 등록 및 해제 예시 (Buff)</summary>
+>
+> <br>
+>
+> 버프 획득 시(`ActivateBuffEffect`) `AddPhaseEffect`를 통해 특정 페이즈(`TURN_START`)에 동작을 등록하고, 버프 종료 시(`EndBuffEffect`) `RemovePhaseEffectRequest`로 해제합니다. 이를 통해 페이즈 매니저는 등록된 옵저버들의 행동을 일괄적으로 관리하고 실행합니다.
+>
+> - [ExampleBuff.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
+>
+> ```csharp
+> public class ExampleBuff : IBattleBuff {
+>     // 버프 활성화 시 동작 (등록)
+>     public void ActivateBuffEffect() {
+>         // 턴 시작 시(TURN_START)에 실행될 효과를 페이즈 매니저에 등록
+>         BattleManager.GetInstance().battlePhaseManager.AddPhaseEffect(this, BuffTargetStatus.TargetEnum, ENUM_BATTLE_PHASE_ACTION.TURN_START);
+>     }
+>
+>     // 버프 종료 시 동작 (해제)
+>     public void EndBuffEffect() {
+>         // 등록된 페이즈 이펙트 해제 요청
+>         BattleManager.GetInstance().battlePhaseManager.RemovePhaseEffectRequest(this, BuffTargetStatus.TargetEnum, ENUM_BATTLE_PHASE_ACTION.TURN_START);
+>     }
+> }
+> ```
+>
+> </details>
+
+> <details>
+> <summary>전투 페이즈 사이클 처리</summary>
+>
+> <br>
+>
+> `ProceedPhase` 메소드는 정의된 순서대로 페이즈를 실행하며 다음 단계로 전이합니다. 각 단계가 완료된 후 다음 단계의 `ProceedPhase`를 재귀적으로 호출하여 `TURN_START_STAND_BY` -> `TURN_START` -> (행동) -> `TURN_END_STAND_BY` -> `TURN_END` 순으로 순환하며 게임 흐름을 제어합니다.
+>
+> - [BattlePhaseManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattlePhaseManager.cs)
+>
+> ```csharp
+> // 지정된 타겟과 액션에 대한 페이즈 진행
+> public void ProceedPhase(in ENUM_BATTLE_PHASE_TARGET phaseEnumTargets, ENUM_BATTLE_PHASE_ACTION phaseEnumAction) {
+>     // ...
+>     ProceedTargetAction(phaseEnumTargets, (target) => {
+>         // ...
+>         // Call Effect Phases (등록된 페이즈 이펙트 실행)
+>         for (int i = 0; i < count; i++) {
+>             // ...
+>             phaseEffectList[(target, phaseEnumAction)][i]?.OnEffectPhase(phaseEnumAction);
+>         }
+>         // ...
+>
+>         // Turn Phases Cycle
+>         if (phaseEnumAction == BATTLE_START) {
+>             // 전투 진입
+>             ProceedPhase(PLAYER, TURN_START_STAND_BY);
+>         }
+>         else if (phaseEnumAction == TURN_START_STAND_BY) {
+>             // 턴 시작 대기: 턴 시작 전 우선 처리될 델리게이트 실행
+>             BattleManager.GetInstance().SetCurrentTurn(target);
+>             BattleManager.GetInstance().battleEventManager.OnTurnStart?.Invoke();
+>             ProceedPhase(target, TURN_START);
+>         }
+>         else if (phaseEnumAction == TURN_START) {
+>             // 턴 시작: 게임 로직상 필요한 핵심 처리 수행
+>         }
+>         else if (phaseEnumAction == TURN_END_STAND_BY) {
+>             // 턴 종료 대기: 턴 종료 전 우선 처리될 델리게이트 실행
+>             ProceedPhase(target, TURN_END);
+>         }
+>         else if (phaseEnumAction == TURN_END) {
+>             // 턴 종료: 게임 로직상 필요한 핵심 처리 수행 (적 행동 개시 등)
+>             if (target == PLAYER) {
+>                 BattleManager.GetInstance().battleEnemyManager.ProceedEnemyPattern(ENEMY1);
+>             }
+>         }
+>         // ...
+>     });
+> }
+> ```
+>
+> </details>
+
+아래 플로우차트는 메인 전투 루프의 실행 흐름을 나타냅니다. 전투 진입 시 초기화 과정을 거쳐 플레이어와 적이 턴을 교차하며, 턴 시작/행동/종료 단계로 세분화된 페이즈 이벤트를 순차적으로 실행합니다. 이때 `AddPhaseEffect`를 통해 버프 및 아이템 효과가 특정 페이즈에 동적으로 등록되며, 턴 사이클 관리 로직이 턴 전환을 지속적으로 체크하여 전투 흐름을 제어합니다.
 
 ```mermaid
 graph TD
@@ -483,23 +573,118 @@ graph TD
 
 > - [BattlePhaseManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattlePhaseManager.cs)
 
-### 2.3. BattleEnemyManager
+### 2.3. BattleEventManager
 
-전투 중 적 개체들의 생명주기와 행동을 총괄하는 매니저 클래스입니다. 적 생성/사망, 턴 진행, 타겟팅, UI 갱신 등을 담당합니다. Enum 비트 연산을 활용한 복합 타겟팅 시스템으로 단일 메서드 호출로 여러 대상에게 효과를 적용합니다.
+전투 중 발생하는 이벤트 델리게이트를 관리하는 클래스입니다. 옵저버 패턴을 통해 버프, 장비, 업적 등이 전투 이벤트를 구독하여 느슨한 결합을 유지합니다.
 
-* **적 리스트 관리**: 최대 4마리까지의 적 오브젝트를 딕셔너리로 관리
+* **턴 이벤트**: `OnTurnStart`, `OnUseCard`, `OnDrawCard` 등
+* **피해/회복 이벤트**: `OnTargetDamaged`, `OnTargetGainHp`, `OnTargetGainShield` 등
+* **버프 이벤트**: `OnTargetGainBuff`, `OnTargetLoseBuff`
+* **수치 수정 함수**: `DamageAddition`, `CostSet` 등 Func 델리게이트로 동적 수치 계산
+
+> 초기 구현 단계에서는 `BattlePhaseManager`를 활용한 옵저버 패턴만으로 전투 이벤트를 관리하려 했으나, 효과 발동 시점마다 실행 주체와 적용 대상의 데이터를 별도로 참조해야 하는 구조적 번거로움과, 효과의 처리 요청 시점과 처리 시작 시점 간의 상태 참조 불일치 문제가 있었습니다. 이를 보완하기 위해 `BattleEventManager`를 도입하여, 이벤트 실행 시 타겟(`IBattleStatus`)과 요인(`IBattleFactor`) 등 필요한 데이터를 인자로 직접 전달함으로써 복잡한 참조 로직을 제거하고 효과 구현의 부담을 크게 경감시켰습니다.
+
+
+>
+> <details>
+> <summary>이벤트 델리게이터 작동 방식</summary>
+>
+>
+> `BattleEventManager`는 다양한 전투 상황에 대응하는 델리게이트를 정의하고 관리합니다.
+>
+> - [BattleEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
+>
+> ```csharp
+> public class BattleEventManager : MonoBehaviour {
+>     // 턴/카드 이벤트
+>     public Action OnTurnStart;                              // 턴 시작 시 호출
+>     public Action<Card> OnUseCard = null;                   // 카드 사용 시 호출
+>     
+>     // 수치 수정 Func 델리게이트
+>     public Func<IBattlePlayerCard, int> DamageAddition = null;   // 추가 피해량 계산
+>     public Func<IBattlePlayerCard, int> CostSet = null;          // 코스트 수정
+>     
+>     // 타겟 기반 이벤트
+>     public Action<IBattleStatus, IBattleFactor, int> OnTargetDamaged = null;      // 피해 발생 시
+>     public Action<IBattleStatus, IBattleFactor, int> OnTargetGainShield = null;   // 실드 획득 시
+> }
+> ```
+>
+>
+> `BattleEnemyStatus` 클래스에서 데미지나 실드 변화 발생 시 `BattleEventManager`를 통해 이벤트를 호출합니다. `IBattleStatus`(타겟)와 `IBattleFactor`(요인)를 인자로 전달하여 구독자들이 상세 정보를 참조할 수 있도록 합니다.
+>
+> - [BattleEnemyStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
+>
+> ```csharp
+> public class BattleEnemyStatus : IBattleStatus {
+>     public int Damage(IBattleFactor factor, BattleDamage amount) {
+>         // ... (데미지 계산 및 적용 로직)
+>
+>         if (finalDamage.damageSourceType == ENUM_DAMAGE_SOURCE_TYPE.DIRECT_ATTACK && factor != null) {
+>             // 피격 이벤트 호출 - 타겟(this), 요인(factor), 최종 데미지 전달
+>             BattleManager.GetInstance().battleEventManager.OnTargetDamaged?.Invoke(this, factor, finalDamage.damage);
+>         }
+>         // ...
+>     }
+>
+>     public void GainShield(IBattleFactor factor, int amount) {
+>         // ... (실드 계산 로직)
+>
+>         if (factor != null) {
+>             // 실드 획득 이벤트 호출 - 타겟(this), 요인(factor), 변화량 전달
+>             BattleManager.GetInstance().battleEventManager.OnTargetGainShield?.Invoke(this, factor, change);
+>         }
+>         // ...
+>     }
+> }
+> ```
+>
+>
+> 버프나 아이템 클래스에서 특정 이벤트(`OnTargetDamaged`)를 구독하고, 효과가 종료될 때 구독을 해제합니다.
+>
+> ```csharp
+> public class ExampleBuff : IBattleBuff {
+>     // 버프 활성화 시 이벤트 구독
+>     public void ActivateBuffEffect() {
+>         BattleManager.GetInstance().battleEventManager.OnTargetDamaged += OnTargetDamaged;
+>     }
+>
+>     // 버프 종료 시 구독 해제
+>     public void EndBuffEffect() {
+>         BattleManager.GetInstance().battleEventManager.OnTargetDamaged -= OnTargetDamaged;
+>     }
+>
+>     // 이벤트 핸들러
+>     void OnTargetDamaged(IBattleStatus target, IBattleFactor factor, int damage) {
+>         // (예시) 특정 진영의 카드로 데미지를 받았을 때 추가 로직 실행
+>         if (factor is IBattlePlayerCard card && card.FactionEnum == ENUM_FACTION.EXAMPLE_FACTION) {
+>             // ...
+>         }
+>     }
+> }
+> ```
+>
+> </details>
+
+
+### 2.4. BattleEnemyManager
+
+전투 중 적 개체들의 생명주기와 행동을 총괄하는 매니저 클래스입니다. 최대 3마리까지의 적 오브젝트를 리스트로 관리하며, 적 생성/사망, 턴 진행, 타겟팅, UI 갱신 등을 담당합니다. Enum 비트 연산을 활용한 복합 타겟팅 시스템으로 단일 메서드 호출로 여러 대상에게 효과를 적용합니다.
+
+* **조건부 적 탐색**: 특정 인덱스나 조건을 만족하는 적들을 비트 플래그로 반환하는 메소드를 제공하여, 복잡한 타겟팅 로직을 비트 연산으로 단순화하여 처리
 * **패턴 기반 행동**: 적의 턴마다 `ProceedEnemyPattern`을 통해 순차적으로 행동 실행
 * **동적 적 추가/제거**: 전투 중 적 소환, 사망, 교체 처리
 * **타겟팅 시스템**: 플레이어 카드 사용 시 타겟 지정 UI 연동
 
 > <details>
-> <summary>ProceedEnemyPattern - 적 턴 순차 진행</summary>
+> <summary>BattleEnemyManager 주요 로직</summary>
 >
 > <br>
 >
-> 재귀 호출을 사용하여 적들의 턴을 순차적으로 진행합니다. `BattleManager.IsBattleEnd`를 체크하여 전투 종료 시 중단하고, 현재 타겟이 `ENEMY3`를 초과하면 플레이어 턴(`TURN_START_STAND_BY`)으로 넘깁니다. 타겟 적이 존재하지 않을 경우 비트 시프트 연산(`(int)current << 1`)을 통해 다음 순번의 적을 즉시 탐색합니다.
+> `ProceedEnemyPattern`은 적들의 턴을 순차적으로 제어하기 위해 재귀 호출을 사용합니다. `BattleManager.IsBattleEnd`를 체크하여 전투 종료 시 중단하고, 현재 타겟이 `ENEMY3`를 초과하면 플레이어 턴(`TURN_START_STAND_BY`)으로 넘깁니다. 타겟 적이 존재하지 않을 경우 비트 시프트 연산(`(int)current << 1`)을 통해 다음 순번의 적을 즉시 탐색합니다.
 >
 > ```csharp
+> // 적 턴 진행 로직 (재귀 호출)
 > public void ProceedEnemyPattern(ENUM_BATTLE_PHASE_TARGET current) {
 >     if (BattleManager.GetInstance().IsBattleEnd == true) return;  // 전투 종료 시 중단
 >     if (current > ENEMY3) {  // 마지막 적 이후면 플레이어 턴으로
@@ -515,16 +700,10 @@ graph TD
 > }
 > ```
 >
-> </details>
-
-> <details>
-> <summary>ProceedEnemyAction - 비트 플래그 기반 일괄 처리</summary>
->
-> <br>
->
-> 비트 플래그(`HasFlag`)를 활용하여 다수의 적에게 일괄적으로 특정 `Action`을 수행합니다. `BattleEnemyObjectList`를 순회하며 입력받은 `enemyTargets` 플래그에 포함된 적(`targetEnemy`)에게만 델리게이트로 전달받은 로직을 실행합니다.
+> 다수의 적에게 일괄적으로 특정 `Action`을 수행하기 위해 `ProceedEnemyAction`은 비트 플래그(`HasFlag`)를 활용합니다. `BattleEnemyObjectList`를 순회하며 입력받은 `enemyTargets` 플래그에 포함된 적(`targetEnemy`)에게만 델리게이트로 전달받은 로직을 실행합니다.
 >
 > ```csharp
+> // 비트 플래그 기반 델리게이트 일괄 실행
 > public void ProceedEnemyAction(ENUM_BATTLE_PHASE_TARGET enemyTargets, Action<BattleEnemyObject> action) {
 >     for (int i = 0; i < BattleEnemyObjectList.Count; i++) {  // 전체 적 리스트 순회
 >         var targetEnemy = BattleEnemyObjectList[i];
@@ -535,48 +714,9 @@ graph TD
 > }
 > ```
 >
-> </details>
-
 > - [BattleEnemyManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEnemyManager.cs)
-
-### 2.4. BattleEventManager
-
-전투 중 발생하는 이벤트 델리게이트를 관리하는 클래스입니다. 옵저버 패턴을 통해 버프, 장비, 업적 등이 전투 이벤트를 구독하여 느슨한 결합을 유지합니다.
-
-* **턴 이벤트**: `OnTurnStart`, `OnUseCard`, `OnDrawCard` 등
-* **피해/회복 이벤트**: `OnTargetDamaged`, `OnTargetGainHp`, `OnTargetGainShield` 등
-* **버프 이벤트**: `OnTargetGainBuff`, `OnTargetLoseBuff`
-* **수치 수정 함수**: `DamageAddition`, `CostSet` 등 Func 델리게이트로 동적 수치 계산
-
-> <details>
-> <summary>BattleEventManager 이벤트 델리게이트</summary>
->
-> <br>
->
-> - [BattleEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
->
-> ```csharp
-> public class BattleEventManager : MonoBehaviour {
->     // 턴/카드 이벤트
->     public Action OnTurnStart;                              // 턴 시작 시 호출
->     public Action<Card> OnUseCard = null;                   // 카드 사용 시 호출
->     public Action<Card> OnDrawCard = null;                  // 카드 드로우 시 호출
->     
->     // 수치 수정 Func 델리게이트
->     public Func<IBattlePlayerCard, int> DamageAddition = null;   // 추가 피해량 계산
->     public Func<IBattlePlayerCard, int> CostSet = null;          // 코스트 수정
->     
->     // 타겟 기반 이벤트
->     public Action<IBattleStatus, IBattleFactor, int> OnTargetDamaged = null;      // 피해 발생 시
->     public Action<IBattleStatus, IBattleFactor, int> OnTargetGainShield = null;   // 실드 획득 시
->     public Action<IBattleStatus, IBattleFactor, Buff, int> OnTargetGainBuff = null;  // 버프 획득 시
->     public Action<BattleEnemyObject> OnEnemyDead = null;    // 적 사망 시
-> }
-> ```
 >
 > </details>
-
-
 
 
 ### 2.5. 스테이터스 시스템
