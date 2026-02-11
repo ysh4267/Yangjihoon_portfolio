@@ -43,6 +43,7 @@
     * [2.4. BattleEnemyManager](#2-4-battleenemymanager)
     * [2.5. 스테이터스 시스템](#2-5-스테이터스-시스템)
     * [2.6. 전투 로직](#2-6-전투-로직)
+    * [2.7. 버프 관리 시스템](#2-7-버프-관리-시스템)
 * [3. UI](#3-ui)
     * [3.1. 폰트](#3-1-폰트)
     * [3.2. 텍스트 데이터](#3-2-텍스트-데이터)
@@ -737,6 +738,82 @@ graph TD
     * 상태 플래그 관리: 관통, 경화, 은신, 무적, 기절 등 다양한 상태 효과
 * **BattleDamage**: 피해 정보를 캡슐화하는 데이터 클래스입니다. 연산자 오버로딩을 통해 피해량 계산을 직관적으로 처리합니다.
 
+아래 클래스 다이어그램은 스테이터스 시스템의 구조와 클래스 간 관계를 나타냅니다. **BattlePlayerStatus**와 **BattleEnemyStatus**는 동일한 인터페이스를 구현하여 공통 로직을 공유하지만, 각자의 역할에 따라 고유한 속성과 메서드를 보유합니다.
+
+**BattlePlayerStatus**는 **BattleEnemyStatus**에 비해 스킬, 장비 등의 추가 시스템을 관리하므로 PlayerSkill, Equipment 등의 속성을 보유하며, AP 소모 여부 확인, 스킬 쿨다운 관리 등의 기능을 제공합니다. **BattleEnemyObject**도 **BattlePlayerObject**에 비해 적 스프라이트 애니메이션, 행동 패턴 스크립트, AI 로직 등 더 다양한 요소를 포함하여 복잡한 구조를 가지며, enemyScript, enemySprite 등을 통해 적의 시각적 표현과 행동을 제어합니다.
+
+```mermaid
+classDiagram
+    class IBattleStatusAttributes {
+        <<interface>>
+        +TargetEnum
+        +MaxHp
+        +CurrentHp
+        +MaxAp
+        +CurrentAp
+        +CurrentShield
+        +BuffCounter
+    }
+
+    class IBattleStatusAction {
+        <<interface>>
+        +Damage()
+        +GainHP()
+        +GainShield()
+        +GainAP()
+        +GainBuff()
+    }
+
+    class IBattleStatus {
+        <<interface>>
+    }
+
+    class BattlePlayerStatus {
+        -playerStatus
+        -playerBuffCounter
+        -playerBattleDynamicValues
+        -playerObject
+        -PlayerSkill
+        -Equipment
+        +IsApEnough()
+        +ReduceSkillCoolDown()
+    }
+
+    class BattleEnemyStatus {
+        -enemyStatus
+        -enemyBuffCounter
+        -enemyDynamicValues
+        -enemyObject
+    }
+
+    class BattlePlayerObject {
+        +battlePlayerStatus
+        +battlePlayerStatusUI
+        +UpdateUI()
+    }
+
+    class BattleEnemyObject {
+        +enemyStatus
+        +enemyStatusUI
+        +enemySprite
+        +enemyScript
+        +UpdateUI()
+        +ProceedEnemyAction()
+    }
+
+    IBattleStatusAttributes <|-- IBattleStatus : 상속 (속성)
+    IBattleStatusAction <|-- IBattleStatus : 상속 (행동)
+
+    IBattleStatus <|.. BattlePlayerStatus : 구현 (플레이어 데이터)
+    IBattleStatus <|.. BattleEnemyStatus : 구현 (적 데이터)
+
+    BattlePlayerObject *-- BattlePlayerStatus : 소유
+    BattleEnemyObject *-- BattleEnemyStatus : 소유
+
+    BattlePlayerStatus --> BattlePlayerObject : 참조
+    BattleEnemyStatus --> BattleEnemyObject : 참조
+```
+
 > <details>
 > <summary>복합 타겟 시스템 예제</summary>
 >
@@ -849,6 +926,103 @@ graph TD
 > // 버프 인터페이스. 턴/행동 기반으로 카운팅되며 효과를 발동함.
 > public interface IBattleBuff : IBattleFactor {
 >     void ActivateBuffEffect(); // 버프 효과 발동
+> }
+> ```
+>
+> </details>
+
+### 2.7. 버프 관리 시스템
+
+캐릭터의 버프와 디버프 상태를 관리하는 `CharacterBuffCounter` 클래스는 플레이어와 적의 전투 상태에 영향을 미치는 모든 버프를 추가, 제거, 조회하는 역할을 수행합니다. 버프 카운트 감소, 면역 판정, UI 갱신 등의 기능을 포함하며, `IBattlePhaseEffect` 인터페이스를 구현하여 페이즈 이벤트에 자동으로 반응합니다.
+
+* **버프 리스트 관리**: 전체 버프, 턴 기반 버프, 카드 버프를 분리 관리하여 각 버프 타입별로 최적화된 처리를 수행합니다.
+* **버프 추가 및 중첩**: 동일한 버프가 존재할 경우 카운트를 중첩시키고, 버프 획득 시 페이즈 이벤트를 발동하여 다른 시스템과 연계합니다.
+* **카운트 감소 시스템**: 턴 종료 시 턴 기반 버프의 카운트를 자동으로 감소시키며, 카운트가 0에 도달하면 버프를 제거합니다.
+* **면역 판정**: 장비나 버프 조건에 따라 특정 디버프에 대한 면역 여부를 판정하는 로직을 제공합니다.
+* **안전한 순회**: 버프 리스트를 순회하며 각 버프에 지정된 액션을 실행하되, 순회 중 리스트가 변경되어도 안전하게 동작하도록 설계되었습니다.
+
+> <details>
+> <summary>버프 추가 및 중첩 처리</summary>
+>
+> <br>
+>
+> - [CharacterBuffCounter.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Data/CharacterBuffCounter.cs)
+>
+> 버프를 추가하기 전에 면역 여부를 확인하고, 페이즈 이벤트를 발동한 후 동일한 버프가 존재하면 카운트를 중첩시킵니다. 새로운 버프일 경우 리스트에 추가하며, UI와 사운드를 갱신합니다.
+>
+> ```csharp
+> public void AddBuff(Buff buff) {
+>     if (buff.battleBuffScript.ContinuousCount <= 0) return;
+>     
+>     // 플레이어일 경우 면역 체크
+>     if (targetStatus == BattleManager.GetInstance().battlePlayerObject.battlePlayerStatus) {
+>         if (CheckImmunity(buff)) return;
+>         
+>         // 버프/디버프 획득 페이즈 실행
+>         if (buff.enumBuffType == ENUM_BUFF_TYPE.BUFF)
+>             BattleManager.GetInstance().battlePhaseManager.ProceedPhase(ENUM_BATTLE_PHASE_TARGET.PLAYER, ENUM_BATTLE_PHASE_ACTION.GAIN_BUFF);
+>         if (buff.enumBuffType == ENUM_BUFF_TYPE.DEBUFF)
+>             BattleManager.GetInstance().battlePhaseManager.ProceedPhase(ENUM_BATTLE_PHASE_TARGET.PLAYER, ENUM_BATTLE_PHASE_ACTION.GAIN_DEBUFF);
+>     }
+>     
+>     // 동일 버프 중첩 처리
+>     bool exist = false;
+>     foreach (var _buff in allBuffList) {
+>         if (_buff.battleBuffScript.BuffName == buff.battleBuffScript.BuffName) {
+>             _buff.battleBuffScript.ContinuousCount += buff.battleBuffScript.ContinuousCount;
+>             if (_buff.battleBuffScript.ContinuousCount > 9999) _buff.battleBuffScript.ContinuousCount = 9999;
+>             exist = true;
+>         }
+>     }
+>     
+>     // 새로운 버프 추가
+>     if (!exist) {
+>         allBuffList.AddLast(buff);
+>         if (buff.battleBuffScript.CounterType == ENUM_BUFF_COUNTER_TYPE.COUNT_BY_TURN)
+>             countByTurnBuffList.AddLast(buff);
+>     }
+>     
+>     // UI 및 사운드 갱신
+>     iconList.UpdateBuffList(updateUIDelay);
+>     targetStatus.UpdateUI();
+> }
+> ```
+>
+> </details>
+
+> <details>
+> <summary>안전한 버프 리스트 순회</summary>
+>
+> <br>
+>
+> 버프 리스트를 순회하며 각 버프에 액션을 적용합니다. 순회 중 버프가 제거되어 리스트가 변경되더라도, 이미 처리된 노드를 추적하여 안전하게 다음 노드로 이동합니다.
+>
+> ```csharp
+> private void ProceedBuffAction(in LinkedList<Buff> buffList, Action<Buff> action) {
+>     List<LinkedListNode<Buff>> proceededBuffList = new List<LinkedListNode<Buff>>();
+>     var node = buffList.First;
+>     
+>     while (node != null) {
+>         try {
+>             proceededBuffList.Add(node);
+>             action(node.Value);  // 액션 실행
+>         }
+>         catch (System.Exception) {
+>             return;
+>         }
+>         
+>         // 순회 중 노드가 제거되었는지 확인
+>         if (!buffList.Contains(node.Value)) {
+>             // 제거되었다면 처음부터 다시 시작하되, 이미 처리된 노드는 건너뜀
+>             node = buffList.First;
+>             while (proceededBuffList.Contains(node)) {
+>                 node = node.Next;
+>             }
+>         }
+>         else {
+>             node = node.Next;
+>         }
+>     }
 > }
 > ```
 >
