@@ -964,6 +964,8 @@ graph TD
 
 * **팝업 객체 표준화**: `IPopup` 인터페이스를 상속받아 모든 팝업 객체를 통합 관리하고, `CloseAnimationPopup` 클래스를 통해 종료 시 공통된 DOTween 애니메이션 시퀀스가 실행되도록 구현하였습니다.
 
+> ![Example_PopupAnimation](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_PopupAnimation.gif)
+
 > <details>
 > <summary>팝업 스택 자동 관리 및 애니메이션</summary>
 >
