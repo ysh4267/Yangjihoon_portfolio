@@ -6,23 +6,26 @@ using static ENUM_BATTLE_PHASE_TARGET;
 using static ENUM_BATTLE_PHASE_ACTION;
 
 public class BattlePlayerStatus : IBattleStatus {
-    //original values
+    //player 게임 내 오브젝트 객체
     BattlePlayerObject playerObject;
-
-    int skillCoolDown;
+    //실제 값을 담기 위한 데이터
+    CharacterBattleStatus playerStatus;
     int currentShield;
-    PlayerBattleStatus playerStatus;
+    //버프 지속시간과 추가 삭제를 관리하기 위한 카운터
     CharacterBuffCounter playerBuffCounter;
-    BattleDynamicValues playerBattleDynamicValues;
+    //스킬
     Skill playerSkill;
+    int skillCoolDown;
+    //전투 진행중 적용될 값
+    BattleDynamicValues playerBattleDynamicValues;
+    //착용중인 장버 정보
     Dictionary<ENUM_EQUIPMENT_PART, Equipment> playerEquipments;
 
+    //외부 참조를 위한 프롬프트 모음
     public ENUM_BATTLE_PHASE_TARGET TargetEnum => PLAYER;
+    // 전투 중 변경시킬 수 없음.(이유: 장비 등 전처리 과정에서 이전 장비의 영향을 받아서는 안됨.) 대신 DynamicValues의 status 관련 변수 수정 필요.
+    public int[] Status => playerStatus.status; 
 
-    //str, dex, int... status for initialize
-    public int[] Status => playerStatus.status; // 전투 중 변경시킬 수 없음.(이유: 장비 등 전처리 과정에서 이전 장비의 영향을 받아서는 안됨.) 대신 DynamicValues의 status 관련 변수 수정 필요.
-
-    //flexable status
     public int MaxHp => playerStatus.max_hp;
 
     public int CurrentHp => playerStatus.current_hp;
@@ -35,11 +38,14 @@ public class BattlePlayerStatus : IBattleStatus {
 
     public int CurrentShield => currentShield;
 
+	// 최대 방어도 = 최대 체력 / 2, 저주 적용 시 공식 변경
 	public int MaxShield {
 		get {
+			// 저주 001: 최대 방어도 20% 감소
 			if (playerBattleDynamicValues.isCurseFlag_001) {
 				return (int)((playerStatus.max_hp / 2f) * 0.8f);
 			}
+			// 저주 001_2: 최대 방어도 40 고정
 			else if (playerBattleDynamicValues.isCurseFlag_001_2) {
 				return (40);
 			}
@@ -47,27 +53,29 @@ public class BattlePlayerStatus : IBattleStatus {
 		}
 	}
 
-    //Buff and Dynamic values
+    public Transform ObjectTransform => playerObject.transform;
     public CharacterBuffCounter BuffCounter => playerBuffCounter;
     public BattleDynamicValues DynamicValues => playerBattleDynamicValues;
-
-    public Transform ObjectTransform => playerObject.transform;
-    public int SkillCoolDown => skillCoolDown;
     public Skill PlayerSkill => playerSkill;
+    public int SkillCoolDown => skillCoolDown;
     public Dictionary<ENUM_EQUIPMENT_PART, Equipment> PlayerEquipments => playerEquipments;
 
+    // 플레이어 전투 데이터 초기화, 스테이터스/버프/스킬/장비 로드
     public void Initialize(BattlePlayerObject _playerObject) {
         playerObject = _playerObject;
         BattleManager.GetInstance().AddBattleStatus(this);
 
+        // DB에서 플레이어 전투 스테이터스 로드
         playerStatus = PlayerBattleStatusDao.GetPlayerBattleStatus(PlayerInfoDao.GetDefaultPlayerInfoIndex());
 
+        // 현재 체력이 최대 체력을 초과하지 않도록 보정
         if (playerStatus.current_hp > playerStatus.max_hp) {
             playerStatus.current_hp = playerStatus.max_hp;
         }
 
         playerBuffCounter = new CharacterBuffCounter(_playerObject.battlePlayerBuffUI, this, TURN_END);
         playerBattleDynamicValues = new BattleDynamicValues(this);
+        // 장착된 스킬 로드 및 초기화
         int skillIndex = PlayerInfoDao.GetPlayerSkillInfo();
         if (skillIndex != 0) {
             playerSkill = SkillDao.GetActiveSkillInfo(skillIndex);
@@ -76,6 +84,7 @@ public class BattlePlayerStatus : IBattleStatus {
             }
         }
 
+        // 장착된 장비 로드 및 파트별 등록
         PlayerEquip equip = PlayerEquipDao.GetPlayerEquipInfo(PlayerInfoDao.GetDefaultPlayerInfoIndex());
         playerEquipments = new Dictionary<ENUM_EQUIPMENT_PART, Equipment>();
         for (int i = 0; i < Enum.GetValues(typeof(ENUM_EQUIPMENT_PART)).Length; i++) {
@@ -90,6 +99,7 @@ public class BattlePlayerStatus : IBattleStatus {
         }
     }
 
+    // 플레이어에게 대미지를 적용하여 버프/장비/저주에 따른 가감 및 승제 연산을 수행하고 방어도와 체력을 차감
     public int Damage(IBattleFactor factor, BattleDamage damage) {
         BattleDamage battleDamage = new BattleDamage(damage);
 
@@ -139,6 +149,7 @@ public class BattlePlayerStatus : IBattleStatus {
         battleDamage.SetDamageValue(Mathf.FloorToInt(m_damage));
 
         int prevHp = CurrentHp;
+        // 대미지가 0 이하이거나 무적/회피 버프가 활성화된 경우 대미지 적용을 건너뜀
         if (!(battleDamage.damage <= 0 || DynamicValues.isBuffFlag_014 || DynamicValues.isBuffFlag_006)) {
 			if (factor is IBattlePlayerCard) {
 				BattleManager.GetInstance().battleArchive.PlayerAct.Add((ENUM_BATTLE_PLAYER_ACT_TYPE.Damaged, battleDamage.damage));
@@ -209,24 +220,28 @@ public class BattlePlayerStatus : IBattleStatus {
         return battleDamage.damage;
     }
 
+    // 사망 처리를 지연시켜 동시 실행되는 Phase 처리가 완료된 후 전투 종료 여부를 확인
     private async void KillPlayerDelay() {
         BattleManager.GetInstance().battlePhaseManager.ProceedPhase(PLAYER, DEAD_STANDBY);
         await Task.Delay(100);
         if (CurrentHp <= 0) BattleManager.GetInstance().CheckBattleEnd();
     }
 
+    // 스킬 쿨다운을 지정된 값으로 설정
     public void SetSkillCoolDown(int amount) {
         skillCoolDown = amount;
         if (skillCoolDown < 0) skillCoolDown = 0;
         BattleManager.GetInstance().battleSkill.UpdateUI();
     }
 
+    // 스킬 쿨다운을 지정된 수치만큼 감소
     public void ReduceSkillCoolDown(int amount = 1) {
         skillCoolDown -= amount;
         if (skillCoolDown < 0) skillCoolDown = 0;
         BattleManager.GetInstance().battleSkill.UpdateUI();
     }
 
+    // 플레이어의 스킬을 교체하고 스킬 UI를 갱신
     public void ChangePlayerSkill(Skill skill) {
         playerSkill = skill;
         if (playerSkill != null) {
@@ -237,6 +252,7 @@ public class BattlePlayerStatus : IBattleStatus {
 
     }
 
+    // AP를 획득하여 최대치를 초과하지 않도록 보정 후 변동량을 반환
     public int GainAP(IBattleFactor factor, int amount) {
         int change = 0;
 
@@ -260,6 +276,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return change;
     }
 
+    // 최대 AP를 증감하고 현재 AP가 최대치를 초과하지 않도록 보정
     public void GainMaxAP(int amount) {
         playerStatus.max_ap += amount;
         if (playerStatus.max_ap < 0) playerStatus.max_ap = 0;
@@ -267,18 +284,21 @@ public class BattlePlayerStatus : IBattleStatus {
         playerObject.battlePlayerStatusUI.UpdateMpUI();
     }
 
+    // 최대 AP를 지정된 값으로 설정
     public void SetMaxAP(int value) {
         if (value < 0) return;
         playerStatus.max_ap = value;
         playerObject.battlePlayerStatusUI.UpdateMpUI();
     }
 
+    // 현재 AP를 지정된 값으로 설정
     public void SetAP(int value) {
         if (value < 0) return;
         playerStatus.current_ap = value;
         playerObject.battlePlayerStatusUI.UpdateMpUI();
     }
 
+    // AP를 소모하여 변동량을 반환, 0 미만이 되지 않도록 보정
     public int LoseAP(int amount) {
         int previousAp = playerStatus.current_ap;
         playerStatus.current_ap -= amount;
@@ -293,6 +313,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return previousAp - playerStatus.current_ap;
     }
 
+    // AP를 회복, 값을 지정하지 않으면 최대치까지 전부 회복
     public void RestoreMP(int? value = null) {
         if (value != null) playerStatus.current_ap += value.Value;
         else playerStatus.current_ap = MaxAp;
@@ -301,6 +322,7 @@ public class BattlePlayerStatus : IBattleStatus {
         playerObject.battlePlayerStatusUI.UpdateMpUI();
     }
 
+    // 방어도를 획득하여 버프/장비/저주에 따른 보정을 적용하고 최대치를 초과하지 않도록 제한
     public void GainShield(IBattleFactor factor, int amount) {
         int change = 0;
 		
@@ -342,6 +364,7 @@ public class BattlePlayerStatus : IBattleStatus {
 		UpdateUI();
     }
 
+    // 방어도를 감소시키고 변동량을 반환
     public int LoseShield(int amount) {
         int change = 0;
 
@@ -358,6 +381,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return change;
     }
 
+    // 방어도를 지정된 값으로 설정하고 0~MaxShield 범위로 보정
     public int SetShield(int amount) {
         currentShield = amount;
         if (amount < 0 || currentShield < 0) currentShield = 0;
@@ -369,6 +393,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return currentShield;
     }
 
+    // 체력을 회복하여 버프/장비/저주에 따른 회복 제한을 적용하고 변동량을 반환
     public int GainHP(IBattleFactor factor, int amount) {
         int change = 0;
 
@@ -406,6 +431,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return change;
     }
 
+    // 현재 체력을 지정된 값으로 설정하고 0~MaxHp 범위로 보정
     public void SetHP(int value) {
         playerStatus.current_hp = value;
         if (playerStatus.current_hp < 0) playerStatus.current_hp = 0;
@@ -414,6 +440,7 @@ public class BattlePlayerStatus : IBattleStatus {
         UpdateUI();
     }
 
+    // 최대 체력을 지정된 값으로 설정하고 현재 체력이 초과하지 않도록 보정
     public void SetMaxHP(int value) {
         if (value < 0) return;
         playerStatus.max_hp = value;
@@ -422,6 +449,7 @@ public class BattlePlayerStatus : IBattleStatus {
         UpdateUI();
     }
 
+    // 버프를 획득하여 초기화 및 효과를 적용하고 업적 조건을 확인
     public void GainBuff(IBattleFactor factor, ENUM_BUFF_INDEX buffIndex, int count, params int[] _params) {
         if (count > 0) {
             Buff buff = BuffDao.GetBuff((int)buffIndex);
@@ -443,15 +471,18 @@ public class BattlePlayerStatus : IBattleStatus {
         }
     }
 
+    // 지정된 버프의 스택을 감소시키고 실제 감소된 수치를 반환
     public int LoseBuffCount(ENUM_BUFF_INDEX buffEnum, int count) {
         return BuffCounter.SubtractBuffCount(buffEnum, count);
     }
 
+    // 플레이어 및 카드 UI를 갱신
     public void UpdateUI() {
         playerObject.UpdateUI();
         BattleManager.GetInstance().battleCardManager.UpdateUI();
     }
 
+    // 필요 AP 이상 보유 여부를 확인
     public bool IsApEnough(int requiredAp) {
         if (playerStatus.current_ap >= requiredAp) {
             return true;
@@ -459,6 +490,7 @@ public class BattlePlayerStatus : IBattleStatus {
         return false;
     }
 
+    // 특정 장비의 장착 여부를 확인, 파트를 지정하면 해당 파트만 확인
     public bool IsEquiped(int equipmentIndex, ENUM_EQUIPMENT_PART? part = null) {
         if (part != null) return playerEquipments[part.Value].Index == equipmentIndex;
         else {
@@ -469,6 +501,7 @@ public class BattlePlayerStatus : IBattleStatus {
         }
     }
 
+    // 플레이어 오브젝트 위치에 이펙트를 재생
     public void PlayEffect(ENUM_BATTLE_VFX effectEnum) {
         // BattleEffectManager.PlayEffect(effectEnum, ObjectTransform);
     }
