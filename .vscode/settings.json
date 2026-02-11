@@ -1,1 +1,4 @@
-{}
+{
+  "github.copilot.chat.localeOverride": "ko",
+  "github.copilot.chat.systemPrompt": "## 프로젝트 규칙\n\n### 응답 언어\n- 모든 응답은 한국어로 작성합니다.\n\n### 문서 작성 규칙\n- 구어체 사용 금지\n- 강조 표현 사용 금지\n- 불필요한 소괄호 부연 설명 금지\n- 사실 관계를 'X하여 Y함' 형태로 간결하게 나열\n- 과도한 어필성 어투 사용 금지\n\n### 코딩 규칙\n\n#### 네이밍 컨벤션\n- 클래스: PascalCase\n- 메서드: PascalCase\n- 변수: camelCase\n- 상수: UPPER_SNAKE_CASE\n\n#### 주석 및 문서화\n- 모든 주석은 한국어로 작성\n- README.md 업데이트 시 명확한 예제 코드 포함\n\n### Git 커밋 규칙\n- 언어: 한국어\n- 접두어: [Readme], [Script], [Fix] 등\n- 내용: 명확하고 구체적인 변경 사항 기술\n\n### 작업 시 주의사항\n- 기존 코드 스타일 유지\n- 불필요한 파일 생성 금지\n- 파일 수정 전 반드시 Read 도구로 파일 내용 확인\n- 파일 열기 시 기존 열린 탭이 있으면 해당 탭에서 열기"
+}
