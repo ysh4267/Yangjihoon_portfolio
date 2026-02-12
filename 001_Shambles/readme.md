@@ -819,6 +819,11 @@ classDiagram
 >
 > <br>
 >
+> <details>
+> <summary>관련 스크립트</summary>
+>
+> <br>
+>
 > - [IBattleStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatus.cs)
 > - [IBattleStatusAttributes.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAttributes.cs)
 > - [IBattleStatusAction.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAction.cs)
@@ -828,6 +833,8 @@ classDiagram
 > - [BattlePlayerObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
 > - [BattleEnemyObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
 > - [ENUM_BATTLE_PHASE_TARGET.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/006_Enum/ENUM_BATTLE_PHASE_TARGET.cs)
+>
+> </details>
 >
 > ```csharp
 > [System.Flags]
@@ -893,6 +900,11 @@ classDiagram
 >
 > <br>
 >
+> <details>
+> <summary>관련 스크립트</summary>
+>
+> <br>
+>
 > - [Battle Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/005_Battle/Interface)
 > - [Card.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/PlayerCard/ExamplePlayerCard.cs)
 > - [Skill.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/SkillCard/ExampleSkillCard.cs)
@@ -900,6 +912,8 @@ classDiagram
 > - [Equipment.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Equipment/ExampleEquipment.cs)
 > - [Enemy.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Enemy/ExampleEnemy.cs)
 > - [EnemyCards](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Card/EnemyCard)
+>
+> </details>
 >
 > ```csharp
 > // DAO에서 클래스명으로 동적 인스턴스 생성
@@ -1041,6 +1055,18 @@ classDiagram
 
 * **프리셋 기반 자동 조정**: `TextMeshPro`를 기반으로 언어와 플랫폼별 텍스트 크기와 폰트 스타일을 관리하는 프리셋 에디터를 사용합니다.
 * **환경 대응**: 각 텍스트 오브젝트가 자신의 프리셋 타입을 명시하여, 실행 환경(모바일/PC, 한국어/영어 등)에 맞춰 자동으로 최적의 표시 상태로 조정됩니다.
+
+>Windows 환경의 경우
+>
+>![Windows](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextWindow.png)
+>
+>Android 환경의 경우
+>
+>![Android](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextAndroid.png)
+>
+>시스템 언어가 영어일 경우
+>
+>![English](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextEnglish.png)
 
 > <details>
 > <summary>폰트 프리셋 및 폰트 사이즈 자동 조정</summary>
