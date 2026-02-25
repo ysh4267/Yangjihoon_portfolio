@@ -1226,6 +1226,7 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 ```
 
 </details>
+
 ---
 ## 4. 매니저
 
@@ -1233,11 +1234,12 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 
 ### 4.1. JSON 관리
 
-게임 데이터의 로컬 저장 및 관리를 위한 유틸리티 클래스입니다. `Newtonsoft.Json`을 래핑하여 직렬화/역직렬화를 수행하며, 보안이 필요한 데이터에 대해 암호화를 지원합니다.
+Json 형식으로 게임 데이터를 로컬에 저장하거나 읽어오기 위한 유틸리티 클래스입니다. `Newtonsoft.Json`을 래핑하여 직렬화/역직렬화를 수행하며, 보안이 필요한 데이터에 대해 암호화를 지원합니다.
 
-*   **AES 암호화**: 배포 빌드(`Release`)에서는 데이터 무결성 보호를 위해 AES 알고리즘으로 파일을 암호화하여 저장합니다. (디버그 모드에서는 비활성화)
 *   **데이터 무결성 검사**: 파일 로드 시 `CheckIntagrity` 메서드를 통해 클래스의 필드 및 프로퍼티 누락 여부를 검증하여 데이터 오염을 방지합니다.
 *   **플랫폼별 파일 처리**: Android(UnityWebRequest)와 PC/iOS(FileStream) 환경에 맞춰 파일 읽기/쓰기 방식을 분기하여 처리합니다.
+*   **AES 암호화**: 배포 빌드(`Release`)에서는 데이터 보호를 위해 AES 알고리즘으로 파일을 암호화하여 저장합니다. 디버그 모드에서는 비활성화됩니다.
+
 
 <details>
 <summary>JSON 데이터 읽기 및 무결성 검증</summary>
@@ -1246,7 +1248,7 @@ public class CloseAnimationPopup : MonoBehaviour, IPopup {
 
 - [JsonDataManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/JsonDataManager.cs)
 
-제네릭 타입 `T`를 받아 파일 입출력을 수행합니다. 파일 시스템에서 JSON 텍스트를 읽어온 후, 암호화 플래그를 확인하여 필요한 경우 AES 복호화를 선행합니다. 이후 `Newtonsoft.Json`을 통해 객체로 역직렬화하고, `CheckIntagrity` 메소드로 데이터 무결성을 검증합니다. 검증 실패 시 `false`를 반환하여 데이터 오염을 알립니다.
+파일로부터 데이터를 읽기 위한 ReadData 메소드는 출력할 데이터 타입을 제네릭 타입 `T`로 받아 파일 입출력을 수행합니다. 파일 시스템에서 JSON 텍스트를 읽어온 후, 암호화 플래그를 확인하여 필요한 경우 AES 복호화를 선행합니다. 이후 `Newtonsoft.Json`을 통해 객체로 역직렬화하고, `CheckIntagrity` 메소드로 데이터 무결성을 검증합니다. 검증 실패 시 `false`를 반환하여 데이터 오염을 알리고 기본 형식의 데이터를 반환합니다.
 
 ```csharp
 public static bool ReadData<T>(ENUM_JSON_FILE fileType, out T data, bool isIntact = false) where T : new() {
@@ -1266,7 +1268,7 @@ public static bool ReadData<T>(ENUM_JSON_FILE fileType, out T data, bool isIntac
 }
 ```
 
-만약 무결성이 필요한 경우 `CheckIntagrity`를 이용해 검사합니다. `CheckIntagrity`는 `JObject`로 파싱된 JSON 데이터와 리플렉션으로 추출한 타입 `T`의 필드 정보를 대조합니다. 클래스에 정의된 모든 필드가 JSON 데이터 내에 키값으로 존재하는지 순회하며 검사합니다. 필수 데이터가 하나라도 누락되었을 경우 즉시 실패 처리하여 불완전한 데이터 로드를 차단합니다.
+만약 무결성이 필요한 경우 `CheckIntagrity`를 이용해 검사합니다. `CheckIntagrity`는 `JObject`로 파싱된 JSON 데이터와 리플렉션으로 추출한 타입 `T`의 필드 정보를 대조합니다. 클래스에 정의된 모든 필드가 JSON 데이터 내에 키값으로 존재하는지 순회하며 검사합니다.
 
 ```csharp
 private static bool CheckIntagrity<T>(string jsonData) where T : new() {
@@ -1286,7 +1288,7 @@ private static bool CheckIntagrity<T>(string jsonData) where T : new() {
 
 ### 4.2. 클라우드 저장
 
-> 출시 초기에는 클라우드 저장의 필요성을 느끼지 못했으나, 이후 유저들의 요청에 따라 지원을 결정했습니다. Google Play의 클라우드 저장 기능과 Apple Game Center의 클라우드 저장 기능을 각각 사용하는 방안을 검토했으나, 플랫폼별로 개별 개발하는 것보다 Unity Cloud Save를 활용하는 것이 개발 시간 단축에 유리하다고 판단했습니다.
+> 출시 전에는 클라우드 저장의 필요성을 느끼지 못했으나, 정식 출시 이후 유저들의 요청에 따라 지원을 결정했습니다. Google Play의 클라우드 저장 기능과 Apple Game Center의 클라우드 저장 기능을 각각 사용하는 방안을 검토했으나, 플랫폼별로 개별 개발하는 것보다 Unity Cloud Save를 활용하는 것이 개발 시간 단축에 유리하다고 판단했습니다.
 >
 > Unity Cloud Save의 데이터 저장 기능을 이용하여 JSON 형태로 데이터를 가공해 주고받는 로직을 공용으로 사용하되, 각 플랫폼별 로그인 인증만 별도로 구현하여 클라우드 저장 기능을 완성했습니다.
 
@@ -1490,9 +1492,9 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 
 ## 5. 개발 환경
 
-> 샴블즈는 대학교 게임 개발 소모임 활동에서 시작된 프로젝트입니다. 초기에는 개발 프로세스가 미숙하여 작업을 비효율적으로 처리하거나, 초기에 구상한 구현 범위를 벗어나는 바람에 프로젝트를 몇 차례 새로 시작하는 수준으로 재구성하기도 했습니다. 개발 과정 내내 현재 방식이 효율적인지, 방향이 올바른지에 대해 끊임없이 고민해왔으며 아직도 정답을 찾지 못한 채 여기까지 왔다고 생각하고 있습니다.
->
-> 해당 과정에서 저희 팀은 개발 효율을 높이기 위해 다양한 시도를 해왔고, 아래는 대부분 그 결과로 구현하게 된 항목들입니다.
+샴블즈는 대학교 게임 개발 소모임 활동에서 시작된 프로젝트입니다. 초기에는 개발 프로세스가 미숙하여 작업을 비효율적으로 처리하거나, 초기에 구상한 구현 범위를 벗어나는 바람에 프로젝트를 몇 차례 새로 시작하는 수준으로 재구성하기도 했습니다. 개발 과정 내내 현재 방식이 효율적인지, 방향이 올바른지에 대해 끊임없이 고민해왔으며 아직도 정답을 찾지 못한 채 여기까지 왔다고 생각하고 있습니다.
+
+해당 과정에서 저희 팀은 개발 효율을 높이기 위해 다양한 시도를 해왔고, 아래는 대부분 그 결과로 구현하게 된 항목들입니다.
 
 ### 5.1. Excel 워크플로우
 > 개발 초기에는 Word 파일로 작성된 기획서의 데이터를 CSV 파일이나 게임 내 Prefab의 인스펙터에 직접 입력하여 구현했습니다. 그러나 게임의 규모가 커지면서 데이터의 수정, 조회, 게임 내 로딩 시간이 길어지기 시작하여 데이터베이스를 도입하기로 결정했습니다.
@@ -1510,6 +1512,205 @@ Excel 파일로 형식화 한 데이터 예제
 [DataParser](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/001_DataParser)
 
 ### 5.2. 확장 메소드
+
+프로젝트 전역에서 반복적으로 사용되는 연산을 확장 메소드로 정의하여 코드 중복을 줄이고 가독성을 높이기 위한 유틸리티 클래스입니다. 컬렉션 조작, Enum 순회, 색상 변환, Transform 위치 제어, 랜덤 선택 등의 기능을 제공합니다.
+
+*   **컬렉션 확장**: `HasValue`로 컬렉션의 유효성을 검사하고, `ContainsIndex`로 `IIndexableDTO` 기반 리스트에서 인덱스 검색을 수행합니다. `FindKeysByValue`로 Dictionary에서 값 기반 키 역검색을 지원합니다.
+*   **Enum 순회**: `GetNextEnum`, `GetPreviousEnum` 메소드로 열거형 상수의 순방향/역방향 이동을 지원하며, 순환 옵션을 제공합니다.
+*   **색상 제어**: `MaskableGraphic`과 `SpriteRenderer`에 대한 색상 변경 메소드를 제공하며, float, int(0~255), Hex 문자열 등 다양한 입력 형식을 지원합니다.
+*   **Transform 위치**: `MoveLocalX/Y/Z`, `SetLocalX/Y/Z` 등으로 Transform의 개별 축 값을 이동하거나 설정하는 메소드를 제공합니다.
+*   **랜덤 선택**: 리스트에서 단일/다중 랜덤 선택, Fisher-Yates 셔플, 가중치 기반 랜덤 선택(`RandomizeByWeight`) 등을 지원합니다.
+
+<details>
+<summary>Collection 관련 메소드</summary>
+
+<br>
+
+- [ExtendedMethods.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/009_Utility/ExtendedMethods.cs)
+
+```csharp
+// 컬렉션이 null이 아니고 요소가 1개 이상인지 확인
+public static bool HasValue(this ICollection collection) {
+    return collection != null && collection.Count > 0;
+}
+
+// IIndexableDTO 리스트에서 특정 인덱스를 가진 항목이 존재하는지 확인
+public static bool ContainsIndex<T>(this List<T> indexableDataList, int? index) where T : IIndexableDTO {
+    if (!index.HasValue) return false;
+
+    foreach (var item in indexableDataList) {
+        if (item.Index == index.Value)
+            return true;
+    }
+
+    return false;
+}
+
+// Dictionary의 value가 일치하는 모든 key를 리스트로 반환
+public static List<TKey> FindKeysByValue<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TValue value) {
+    if (dictionary.HasValue() == false) return new List<TKey>();
+    return dictionary.Where(pair => EqualityComparer<TValue>.Default.Equals(pair.Value, value))
+                     .Select(pair => pair.Key)
+                     .ToList();
+}
+```
+
+</details>
+
+<details>
+<summary>Enum 관련 메소드</summary>
+
+<br>
+
+```csharp
+// 열거자에서 다음 열거 상수를 반환 (circulation이 true이면 순환)
+public static T GetNextEnum<T>(this T enumVal, bool circulation = false) where T : System.Enum {
+    if (!typeof(T).IsEnum) throw new ArgumentException($"{typeof(T).FullName}는 Enum 타입이 아닙니다.");
+
+    T[] arr = (T[])Enum.GetValues(enumVal.GetType());
+    int i = Array.IndexOf(arr, enumVal);
+    return (i >= arr.Length - 1) ? (circulation ? arr[arr.Length - 1] : arr[0]) : arr[i + 1];
+}
+
+// 열거자에서 이전 열거 상수를 반환 (circulation이 true이면 순환)
+public static T GetPreviousEnum<T>(this T enumVal, bool circulation = false) where T : struct {
+    if (!typeof(T).IsEnum) throw new ArgumentException($"{typeof(T).FullName}는 Enum 타입이 아닙니다.");
+
+    T[] arr = (T[])Enum.GetValues(enumVal.GetType());
+    int i = Array.IndexOf(arr, enumVal);
+    return (i <= 0) ? (circulation ? arr[0] : arr[arr.Length - 1]) : arr[i - 1];
+}
+```
+
+</details>
+
+<details>
+<summary>Color 관련 메소드</summary>
+
+<br>
+
+```csharp
+// MaskableGraphic의 색상을 float 값으로 변경 (null인 채널은 기존 값 유지)
+public static void ChangeColor<T>(this T component, float? r = null, float? g = null, float? b = null, float? alpha = null) where T : MaskableGraphic {
+    Color color = component.color;
+    component.color = new Color(r ?? color.r, g ?? color.g, b ?? color.b, alpha ?? color.a);
+}
+
+// MaskableGraphic의 색상을 0~255 int 값으로 변경 (null인 채널은 기존 값 유지)
+public static void ChangeColor<T>(this T component, int? r = null, int? g = null, int? b = null, int? alpha = null) where T : MaskableGraphic {
+    Color color = component.color;
+    component.color = new Color(r / 255f ?? color.r, g / 255f ?? color.g, b / 255f ?? color.b, alpha / 255f ?? color.a);
+}
+
+// MaskableGraphic의 색상을 Hex 문자열로 변경
+public static void ChangeColor<T>(this T component, string hex) where T : MaskableGraphic {
+    Color color = component.color;
+    component.color = hex.HexToRGB();
+}
+
+// 6자리 Hex 문자열을 Color로 변환
+public static Color HexToRGB(this string hex) {
+    if (hex.Length != 6) {
+        Debug.LogError("Hex string should have 6 characters.");
+        return Color.white;
+    }
+
+    byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+    byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+    byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+
+    return new Color(r / 255.0f, g / 255.0f, b / 255.0f);
+}
+```
+
+</details>
+
+<details>
+<summary>Position 관련 메소드</summary>
+
+<br>
+
+```csharp
+// Transform의 localPosition의 X 값을 이동
+public static void MoveLocalX(this Transform transform, float deltaX) {
+    Vector3 newPosition = transform.localPosition + new Vector3(deltaX, 0, 0);
+    transform.localPosition = newPosition;
+}
+
+// Transform의 localPosition의 X 값을 설정
+public static void SetLocalX(this Transform transform, float x) {
+    Vector3 newPosition = new Vector3(x, transform.localPosition.y, transform.localPosition.z);
+    transform.localPosition = newPosition;
+}
+
+// Transform의 worldPosition의 X 값을 설정
+public static void SetX(this Transform transform, float x) {
+    Vector3 newPosition = new Vector3(x, transform.position.y, transform.position.z);
+    transform.position = newPosition;
+}
+```
+
+</details>
+
+<details>
+<summary>Random 관련 메소드</summary>
+
+<br>
+
+```csharp
+// 리스트에서 랜덤으로 하나의 요소를 반환
+public static T RandomValue<T>(this List<T> dataList) {
+    if (dataList.HasValue() == false) return default;
+    else if (dataList.Count == 1) return dataList[0];
+    return dataList[UnityEngine.Random.Range(0, dataList.Count)];
+}
+
+// 리스트를 Fisher-Yates 알고리즘으로 셔플하여 새 리스트를 반환
+public static List<T> ShuffleList<T>(this List<T> list) {
+    List<T> resultList = list.ToList();
+    int randNumber;
+    for (int i = 0; i < list.Count; i++) {
+        randNumber = UnityEngine.Random.Range(i, list.Count);
+        Swap(resultList, i, randNumber);
+    }
+    return resultList;
+}
+
+// 가중치 기반 랜덤 선택으로 리스트를 재구성하여 반환
+public static List<T> RandomizeByWeight<T>(this IEnumerable<T> source, Func<T, int> weightSelector, int? seedValue = null, int? count = null) {
+    System.Random rand = seedValue.HasValue ? new System.Random(seedValue.Value) : new System.Random();
+    List<T> randomizedList = new List<T>();
+    List<T> remainingList = new List<T>(source);
+
+    int totalWeight = remainingList.Sum(weightSelector);
+    int targetCount = count ?? source.Count();
+
+    while (randomizedList.Count < targetCount && remainingList.Count > 0) {
+        if (totalWeight <= 0) {
+            randomizedList.AddRange(remainingList.Take(targetCount - randomizedList.Count));
+            break;
+        }
+
+        int randomValue = rand.Next(totalWeight);
+        for (int i = 0; i < remainingList.Count; i++) {
+            T item = remainingList[i];
+            if (randomValue < weightSelector(item)) {
+                randomizedList.Add(item);
+                totalWeight -= weightSelector(item);
+                remainingList[i] = remainingList[remainingList.Count - 1];
+                remainingList.RemoveAt(remainingList.Count - 1);
+                break;
+            }
+            else {
+                randomValue -= weightSelector(item);
+            }
+        }
+    }
+    return randomizedList;
+}
+```
+
+</details>
 
 ### 5.3. 에디터 확장
 
