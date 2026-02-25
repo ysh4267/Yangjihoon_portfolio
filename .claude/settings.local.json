@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git filter-branch:*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(del \"c:\\\\Users\\\\YangJiHoon\\\\Documents\\\\Yangjihoon_portfolio\\\\001_Shambles\\\\001_Script\\\\009_Utility\\\\UtilityMethods.cs\")",
+      "Bash(del \"c:\\\\Users\\\\YangJiHoon\\\\Documents\\\\Yangjihoon_portfolio\\\\001_Shambles\\\\001_Script\\\\009_Utility\\\\DataConvertExtendedMethods.cs\")"
+    ]
+  }
+}
