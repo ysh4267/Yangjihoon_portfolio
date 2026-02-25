@@ -1297,7 +1297,7 @@ Unity Services의 Cloud Save를 활용하여 플랫폼 간 데이터 동기화�
 *   **데이터 충돌 방지**: 클라우드 데이터와 로컬 데이터를 비교/검증하는 로직을 포함하여 데이터 손실을 최소화합니다.
 
 <details>
-<summary>클라우드 데이터 안전한 저장</summary>
+<summary>클라우드 데이터</summary>
 
 <br>
 
@@ -1497,10 +1497,14 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 ### 5.1. Excel 워크플로우
 > 개발 초기에는 Word 파일로 작성된 기획서의 데이터를 CSV 파일이나 게임 내 Prefab의 인스펙터에 직접 입력하여 구현했습니다. 그러나 게임의 규모가 커지면서 데이터의 수정, 조회, 게임 내 로딩 시간이 길어지기 시작하여 데이터베이스를 도입하기로 결정했습니다.
 >
-> 데이터베이스 적용 이후에는 SQLite Browser를 사용하여 Word나 Excel 기획서의 데이터를 DB 파일에 직접 입력했으나, 이 방식 역시 효율성과 휴먼 에러 문제가 있었습니다. 이를 해결하기 위해 기획팀과 함께 DB 구조에 맞춘 기획서용 Excel 형식을 작성하고, 해당 Excel 데이터를 DB에 파싱하여 입력하는 외부 도구를 구현하여 현재까지 사용 중입니다.
+> 도입할 데이터베이스로는 별도의 서버 구축이 필요 없고, 단일 파일로 관리가 가능하며, Unity 환경에서의 호환성이 좋은 SQLite를 선택했습니다. 데이터베이스 적용 이후 게임 내 로딩 시간이나 조회 속도는 개선되었지만, 데이터 수정 및 삽입은 SQLite Browser를 통해 직접 하나씩 입력하는 방식이라 이전과 크게 달라지지 않아 효율성과 휴먼 에러 문제가 여전히 발생했습니다. 이를 해결하기 위해 기획팀과 함께 DB 구조에 맞춘 기획서용 Excel 형식을 작성하고, 해당 Excel 데이터를 DB에 파싱하여 입력하는 외부 도구를 구현하여 현재까지 사용 중입니다.
 
 게임 내 데이터 기획은 Excel 파일로 작성됩니다. 기획팀에서 작성한 Excel 파일을 외부 도구인 `DataParser`에 입력하면, `DataConverter`가 다중 시트를 병렬로 처리하여 SQLite DB에 파싱합니다. 파싱 완료 후 `DataChecker`가 DB 내 참조 무결성 검증과 에셋 폴더의 실제 파일 존재 여부를 대조하여 누락된 데이터를 리스트업하고, 문제가 있다면 수정합니다.
 
+Excel 파일로 형식화 한 데이터 예제
+![Example_ExcelData](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_ExcelData.png)
+
+데이터 파서 작동 이미지
 ![DataParser](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/900_ExternalTool/001_DataParser/Build/Capture.PNG)
 
 [DataParser](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/001_DataParser)
