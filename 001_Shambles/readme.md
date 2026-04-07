@@ -1085,14 +1085,14 @@ private void ProceedBuffAction(in LinkedList<Buff> buffList, Action<Buff> action
 
 환경이나 조건별로 폰트 및 사이즈 자동 적용예시
 
-Windows 환경의 경우
-![Windows](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextWindow.png)
+ - Windows 환경의 경우
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextWindow.png" width="600">
 
-Android 환경의 경우
-![Android](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextAndroid.png)
+ - Android 환경의 경우
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextAndroid.png" width="600">
 
-시스템 언어가 영어일 경우
-![English](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextEnglish.png)
+ - 시스템 언어가 영어일 경우
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextEnglish.png" width="600">
 
 <details>
 <summary>폰트 프리셋 및 폰트 사이즈 자동 조정</summary>
@@ -1190,7 +1190,8 @@ public TextDefineString(ENUM_LANGUAGE languageEnum) {
 
 * **팝업 객체 표준화**: `IPopup` 인터페이스를 상속받아 모든 팝업 객체를 통합 관리하고, `CloseAnimationPopup` 클래스를 통해 종료 시 공통된 DOTween 애니메이션 시퀀스가 실행되도록 구현하였습니다.
 
-> ![Example_PopupAnimation](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_PopupAnimation.gif)
+ - 팝업창 닫기 애니메이션
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_PopupAnimation.gif" width="600">
 
 <details>
 <summary>팝업 스택 자동 관리 및 애니메이션</summary>
@@ -1501,13 +1502,13 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 >
 > 도입할 데이터베이스로는 별도의 서버 구축이 필요 없고, 단일 파일로 관리가 가능하며, Unity 환경에서의 호환성이 좋은 SQLite를 선택했습니다. 데이터베이스 적용 이후 게임 내 로딩 시간이나 조회 속도는 개선되었지만, 데이터 수정 및 삽입은 SQLite Browser를 통해 직접 하나씩 입력하는 방식이라 이전과 크게 달라지지 않아 효율성과 휴먼 에러 문제가 여전히 발생했습니다. 이를 해결하기 위해 기획팀과 함께 DB 구조에 맞춘 기획서용 Excel 형식을 작성하고, 해당 Excel 데이터를 DB에 파싱하여 입력하는 외부 도구를 구현하여 현재까지 사용 중입니다.
 
-게임 내 데이터 기획은 Excel 파일로 작성됩니다. 기획팀에서 작성한 Excel 파일을 외부 도구인 `DataParser`에 입력하면, `DataConverter`가 다중 시트를 병렬로 처리하여 SQLite DB에 파싱합니다. 파싱 완료 후 `DataChecker`가 DB 내 참조 무결성 검증과 에셋 폴더의 실제 파일 존재 여부를 대조하여 누락된 데이터를 리스트업하고, 문제가 있다면 수정합니다.
+게임 내 데이터는 DB 구조에 맞춰 형식화된 Excel 파일로 작성됩니다. Excel 파일에는 데이터 유효성 검사 기능을 적용하여 잘못된 값이 입력될 경우 작성자에게 경고합니다. 이후 기획팀에서 작성한 Excel 파일을 외부 도구인 `DataParser`에 입력하고 변환이 시작되면 `DataConverter`가 다중 시트를 병렬로 처리하여 SQLite DB에 파싱합니다. 파싱 완료 후 `DataChecker`를 통해 DB 내 참조 무결성 검증과 에셋 폴더의 실제 파일 존재 여부를 대조하여 누락된 데이터를 리스트업하고, 문제가 있다면 수정합니다.
 
-Excel 파일로 형식화 한 데이터 예제
-![Example_ExcelData](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_ExcelData.png)
+ - Excel 파일로 형식화 한 데이터 예제
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_ExcelData.png" width="600">
 
-데이터 파서 작동 이미지
-![DataParser](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/900_ExternalTool/001_DataParser/Build/Capture.PNG)
+ - 데이터 파서 작동 이미지
+<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/900_ExternalTool/001_DataParser/Build/Capture.PNG" width="600">
 
 [DataParser](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/001_DataParser)
 
