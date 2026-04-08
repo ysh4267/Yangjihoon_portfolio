@@ -20,7 +20,7 @@
 
 # 프로젝트
 
-## 1. [[샴블즈(Shambles)]](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles)
+## 1. [[샴블즈(Shambles)]](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles)
 [![Unity](https://img.shields.io/badge/Unity-000000?logo=unity&logoColor=white&labelColor=555555)](https://unity.com/) [![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)](https://dotnet.microsoft.com/ko-kr/languages/csharp) [![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white&labelColor=555555)](https://dotnet.microsoft.com/) [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white&labelColor=555555)](https://www.sqlite.org/) [![Amazon S3](https://img.shields.io/badge/Amazon_S3-FF9900?logo=amazons3&logoColor=white)](https://aws.amazon.com/s3/)
 
 * [Steam 상점 페이지](https://store.steampowered.com/app/2289630/_/?l=koreana)
@@ -104,7 +104,7 @@
 
 ## 외부도구
 
-### 1. [[DataParser]](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/001_DataParser)
+### 1. [[DataParser]](https://github.com/ysh4267/ysh4267/tree/main/900_ExternalTool/001_DataParser)
 > C#, .NET Framework, SQLite, Excel Interop
 
 #### 개요
@@ -115,7 +115,7 @@
 * 프로젝트 환경에 최적화된 SQLite 데이터베이스 및 JSON 포맷 결과물 생성
 * 데이터 정합성 유지를 위한 파싱 엔진 최적화
 
-### 2. [[DataIntegrityChecker]](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/002_DataIntegrityChecker)
+### 2. [[DataIntegrityChecker]](https://github.com/ysh4267/ysh4267/tree/main/900_ExternalTool/002_DataIntegrityChecker)
 > Python, SQLite, Regex, Pandas
 
 #### 개요
@@ -126,7 +126,7 @@
 * SQLite 및 Pandas를 활용한 대규모 원문 데이터의 구조적 분석 및 결함 탐지
 * 검사 결과를 리포트로 생성하여 데이터 정합성 관리 효율성 증대
 
-### 3. [[BulkEmailSender]](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/003_BulkEmailSender)
+### 3. [[BulkEmailSender]](https://github.com/ysh4267/ysh4267/tree/main/900_ExternalTool/003_BulkEmailSender)
 > C#, .NET Framework, SMTP, Excel Interop
 
 #### 개요

@@ -111,7 +111,7 @@ DataReader에는 SQLite 데이터베이스와의 통신 및 텍스트 데이터 
 
 <br>
 
-- [CardDao.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/001_DataClass/DAO/Card/CardDao.cs)
+- [CardDao.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/001_DataClass/DAO/Card/CardDao.cs)
 
 ```csharp
 public class CardDao : CollectionDao {
@@ -147,7 +147,7 @@ public class CardDao : CollectionDao {
 
 <br>
 
-- [SQLiteManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/SQLiteManager.cs)
+- [SQLiteManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/002_DataReader/SQLiteManager.cs)
 
 <br>
 
@@ -199,7 +199,7 @@ Mono.Data.Sqlite 라이브러리에서 제공하는 `SqliteDataReader`를 래핑
 
 <br>
 
-- [CustomDataReader.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/CustomDataReader.cs)
+- [CustomDataReader.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/002_DataReader/CustomDataReader.cs)
 
 ```csharp
 public T GetSafeValue<T>(int colIndex) {
@@ -226,18 +226,18 @@ public T GetSafeValue<T>(int colIndex) {
 
  - 수치값이 적용되기 전 텍스트
 
-![Example_CardTextNormal](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextNormal.png)
+![Example_CardTextNormal](https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_CardTextNormal.png)
 
  - 수치값이 적용된 후 텍스트
 
-![Example_CardTextParsed](https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_CardTextParsed.png)
+![Example_CardTextParsed](https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_CardTextParsed.png)
 
 <details>
 <summary>카드 설명의 수치 태그를 파싱하는 메소드</summary>
 
 <br>
 
-- [TextParser.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/002_DataReader/TextParser.cs)
+- [TextParser.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/002_DataReader/TextParser.cs)
 
 ```csharp
 public static string ParseStatusBasedCardDescriptionText(this string rawText, int[] status, Card card) {
@@ -278,7 +278,7 @@ public static string ParseStatusBasedCardDescriptionText(this string rawText, in
 
 <br>
 
-- [Data Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Class)
+- [Data Classes](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles/001_Script/001_DataClass/Class)
 
 ```csharp
 // 메인 데이터 DTO - 여러 DAO를 통해 조합되는 완전한 데이터 객체
@@ -319,7 +319,7 @@ public class PlayerRawInfo {
 
 <br>
 
-- [Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/Interface)
+- [Interfaces](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles/001_Script/001_DataClass/Interface)
 
 ```csharp
 // 인덱스 기반 DTO - 모든 DTO의 기본 인터페이스
@@ -357,7 +357,7 @@ DAO는 데이터베이스 접근 로직을 캡슐화하여 비즈니스 로직�
 
 <br>
 
-- [DAO Classes](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
+- [DAO Classes](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles/001_Script/001_DataClass/DAO)
 
 ```csharp
 public class CardDao : CollectionDao {
@@ -422,7 +422,7 @@ public class CardDao : CollectionDao {
 
 <br>
 
-- [BattleManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleManager.cs)
+- [BattleManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleManager.cs)
 
 ```csharp
 public class BattleManager : MonoBehaviour, IDisposable {
@@ -512,7 +512,7 @@ graph TD
 
 >아래는 전투 사이클이 직접적으로 관리되는 `ProceedPhase` 메소드입니다. 정의된 순서대로 페이즈를 실행하며, 각 단계가 완료된 후 다음 단계의 `ProceedPhase`를 재귀적으로 호출하여 `TURN_START_STAND_BY` -> `TURN_START` -> (행동) -> `TURN_END_STAND_BY` -> `TURN_END` 순으로 순환하며 게임 흐름을 제어합니다.
 
-- [BattlePhaseManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattlePhaseManager.cs)
+- [BattlePhaseManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattlePhaseManager.cs)
 
 ```csharp
 // 지정된 타겟과 액션에 대한 페이즈 진행
@@ -558,7 +558,7 @@ public void ProceedPhase(in ENUM_BATTLE_PHASE_TARGET phaseEnumTargets, ENUM_BATT
 
 >버프의 효과 실행 타이밍 또한 페이즈 매니저를 통해 관리됩니다. 버프 획득 시 `ActivateBuffEffect`에서 `AddPhaseEffect`를 호출하여 특정 페이즈(`TURN_START`)에 동작을 등록하고, 버프 종료 시 `EndBuffEffect`에서 `RemovePhaseEffectRequest`로 해제합니다.
 
-- [ExampleBuff.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
+- [ExampleBuff.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
 
 ```csharp
 public class ExampleBuff : IBattleBuff {
@@ -638,7 +638,7 @@ graph TD
 
 `BattleEventManager`는 다양한 전투 상황에 대응하는 델리게이트를 정의하고 관리합니다.
 
-- [BattleEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
+- [BattleEventManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEventManager.cs)
 
 ```csharp
 public class BattleEventManager : MonoBehaviour {
@@ -659,7 +659,7 @@ public class BattleEventManager : MonoBehaviour {
 
 `BattleEnemyStatus` 클래스에서 데미지나 실드 변화 발생 시 `BattleEventManager`를 통해 이벤트를 호출합니다. `IBattleStatus`(타겟)와 `IBattleFactor`(요인)를 인자로 전달하여 구독자들이 상세 정보를 참조할 수 있도록 합니다.
 
-- [BattleEnemyStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
+- [BattleEnemyStatus.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
 
 ```csharp
 public class BattleEnemyStatus : IBattleStatus {
@@ -760,7 +760,7 @@ public void ProceedEnemyAction(ENUM_BATTLE_PHASE_TARGET enemyTargets, Action<Bat
 }
 ```
 
-- [BattleEnemyManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEnemyManager.cs)
+- [BattleEnemyManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Manager/BattleEnemyManager.cs)
 
 </details>
 
@@ -864,15 +864,15 @@ classDiagram
 
 <br>
 
-- [IBattleStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatus.cs)
-- [IBattleStatusAttributes.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAttributes.cs)
-- [IBattleStatusAction.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAction.cs)
-- [BattleStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleStatus.cs)
-- [BattlePlayerStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattlePlayerStatus.cs)
-- [BattleEnemyStatus.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
-- [BattlePlayerObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
-- [BattleEnemyObject.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
-- [ENUM_BATTLE_PHASE_TARGET.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/006_Enum/ENUM_BATTLE_PHASE_TARGET.cs)
+- [IBattleStatus.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatus.cs)
+- [IBattleStatusAttributes.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAttributes.cs)
+- [IBattleStatusAction.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Interface/IBattleStatusAction.cs)
+- [BattleStatus.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleStatus.cs)
+- [BattlePlayerStatus.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Status/BattlePlayerStatus.cs)
+- [BattleEnemyStatus.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Status/BattleEnemyStatus.cs)
+- [BattlePlayerObject.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattlePlayerObject.cs)
+- [BattleEnemyObject.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Entity/BattleEnemyObject.cs)
+- [ENUM_BATTLE_PHASE_TARGET.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/006_Enum/ENUM_BATTLE_PHASE_TARGET.cs)
 
 ```csharp
 [System.Flags]
@@ -940,13 +940,13 @@ public class BattleStatus : IBattleStatusAction {
 
 <br>
 
-- [Battle Interfaces](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/005_Battle/Interface)
-- [Card.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/PlayerCard/ExamplePlayerCard.cs)
-- [Skill.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Card/SkillCard/ExampleSkillCard.cs)
-- [Buff.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
-- [Equipment.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Equipment/ExampleEquipment.cs)
-- [Enemy.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/003_Object/Class/Enemy/ExampleEnemy.cs)
-- [EnemyCards](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/001_Shambles/001_Script/003_Object/Class/Card/EnemyCard)
+- [Battle Interfaces](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles/001_Script/005_Battle/Interface)
+- [Card.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Card/PlayerCard/ExamplePlayerCard.cs)
+- [Skill.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Card/SkillCard/ExampleSkillCard.cs)
+- [Buff.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Buff/ExampleBuff.cs)
+- [Equipment.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Equipment/ExampleEquipment.cs)
+- [Enemy.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/003_Object/Class/Enemy/ExampleEnemy.cs)
+- [EnemyCards](https://github.com/ysh4267/ysh4267/tree/main/001_Shambles/001_Script/003_Object/Class/Card/EnemyCard)
 
 
 ```csharp
@@ -994,7 +994,7 @@ public interface IBattleBuff : IBattleFactor {
 
 <br>
 
-- [CharacterBuffCounter.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/005_Battle/Data/CharacterBuffCounter.cs)
+- [CharacterBuffCounter.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/005_Battle/Data/CharacterBuffCounter.cs)
 
 버프를 추가할 때는 먼저 면역 여부를 확인하고, 페이즈 이벤트를 발동한 후 동일한 버프가 이미 존재하면 카운트를 중첩시킵니다. 새로운 버프일 경우 리스트에 추가하며, UI와 사운드를 갱신합니다.
 
@@ -1086,21 +1086,21 @@ private void ProceedBuffAction(in LinkedList<Buff> buffList, Action<Buff> action
 환경이나 조건별로 폰트 및 사이즈 자동 적용예시
 
  - Windows 환경의 경우
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextWindow.png" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_TextWindow.png" width="600">
 
  - Android 환경의 경우
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextAndroid.png" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_TextAndroid.png" width="600">
 
  - 시스템 언어가 영어일 경우
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_TextEnglish.png" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_TextEnglish.png" width="600">
 
 <details>
 <summary>폰트 프리셋 및 폰트 사이즈 자동 조정</summary>
 
 <br>
 
-- [FontPresetDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/FontPresetDefine.cs)
-- [FontSizeDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/FontSizeDefine.cs)
+- [FontPresetDefine.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Font/FontPresetDefine.cs)
+- [FontSizeDefine.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Font/FontSizeDefine.cs)
 
 `FontPresetData`에는 Enum으로 분류된 텍스트 타입을 기준으로 폰트와 사이즈가 언어, 작동 환경별로 지정되어 있습니다. `GetFontPresetData`는 현재 설정된 언어에 맞는 프리셋 데이터를 반환하며, 인덱스 범위를 초과하는 요청이 들어올 경우 기본값(마지막 프리셋)을 반환하여 런타임 에러를 방지합니다.
 
@@ -1146,9 +1146,9 @@ public static FontSize CurrentFontSize {
 
 <br>
 
-- [TextDefine.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefine.cs)
-- [TextDefineString.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineString.cs)
-- [TextDefineStringData.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineStringData.cs)
+- [TextDefine.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefine.cs)
+- [TextDefineString.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineString.cs)
+- [TextDefineStringData.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Font/TextDefineStringData.cs)
 
 현재 언어 설정에 맞는 텍스트 데이터를 반환합니다. 데이터가 메모리에 없는 경우 실시간으로 로드하여 반환하는 지연 로딩 방식을 사용합니다.
 
@@ -1191,15 +1191,15 @@ public TextDefineString(ENUM_LANGUAGE languageEnum) {
 * **팝업 객체 표준화**: `IPopup` 인터페이스를 상속받아 모든 팝업 객체를 통합 관리하고, `CloseAnimationPopup` 클래스를 통해 종료 시 공통된 DOTween 애니메이션 시퀀스가 실행되도록 구현하였습니다.
 
  - 팝업창 닫기 애니메이션
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_PopupAnimation.gif" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_PopupAnimation.gif" width="600">
 
 <details>
 <summary>팝업 스택 자동 관리 및 애니메이션</summary>
 
 <br>
 
-- [IPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/IPopup.cs)
-- [CloseAnimationPopup.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/004_UI/Popup/CloseAnimationPopup.cs)
+- [IPopup.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Popup/IPopup.cs)
+- [CloseAnimationPopup.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/004_UI/Popup/CloseAnimationPopup.cs)
 
 팝업 UI의 기반이 되는 클래스로, 팝업이 활성화되는 즉시 `GameManager`의 팝업 스택에 등록되어 '뒤로가기' 키를 통한 순차석 닫기를 지원합니다. 닫기 요청(Close Request) 발생 시 즉시 객체가 사라지지 않고, 지정된 축소 및 페이드 애니메이션을 모두 수행한 뒤에 비활성화 되도록 생명주기를 관리합니다.
 
@@ -1247,7 +1247,7 @@ Json 형식으로 게임 데이터를 로컬에 저장하거나 읽어오기 위
 
 <br>
 
-- [JsonDataManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/JsonDataManager.cs)
+- [JsonDataManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/007_Manager/JsonDataManager.cs)
 
 파일로부터 데이터를 읽기 위한 ReadData 메소드는 출력할 데이터 타입을 제네릭 타입 `T`로 받아 파일 입출력을 수행합니다. 파일 시스템에서 JSON 텍스트를 읽어온 후, 암호화 플래그를 확인하여 필요한 경우 AES 복호화를 선행합니다. 이후 `Newtonsoft.Json`을 통해 객체로 역직렬화하고, `CheckIntagrity` 메소드로 데이터 무결성을 검증합니다. 검증 실패 시 `false`를 반환하여 데이터 오염을 알리고 기본 형식의 데이터를 반환합니다.
 
@@ -1304,7 +1304,7 @@ Unity Services의 Cloud Save를 활용하여 플랫폼 간 데이터 동기화�
 
 <br>
 
-- [CloudSaveManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/CloudSaveManager.cs)
+- [CloudSaveManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/007_Manager/CloudSaveManager.cs)
 
 데이터 저장 전 `Unity Services` 초기화 및 로그인 상태를 이중으로 점검하여 안전성을 확보합니다. 로그인이 되어있지 않다면 즉시 재로그인을 시도하며, 최종 실패 시 에러 콜백을 반환합니다. 모든 검증이 통과되면 `CloudSaveService` API를 통해 비동기적으로 데이터를 클라우드에 업로드합니다.
 
@@ -1342,7 +1342,7 @@ async Task SaveInternal(string json, Action<CLOUD_SAVE_RESULT> onErrorCallback) 
 
 <br>
 
-- [AchievementEventManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/AchievementEventManager.cs)
+- [AchievementEventManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/007_Manager/AchievementEventManager.cs)
 
 특정 업적 해금 요청 시, 현재 빌드된 타겟 플랫폼(`STEAMWORKS_NET`, `PLAY_STORE`, `APP_STORE`)에 맞춰 적절한 API를 호출합니다. Steam의 `UnlockAchievement`나 모바일의 `Social.ReportProgress` 등 상이한 플랫폼별 구현을 캡슐화하여, 비즈니스 로직에서는 단일 메소드 호출만으로 모든 플랫폼에 대응할 수 있습니다.
 
@@ -1376,7 +1376,7 @@ public static void OnAchievementUnlocked(int achievementIndex) {
 
 <br>
 
-- [UnityAnalyticsManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/UnityAnalyticsManager.cs)
+- [UnityAnalyticsManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/007_Manager/UnityAnalyticsManager.cs)
 
 `Event` 클래스를 상속받아 파라미터 타입을 강력하게 규제합니다. 프로퍼티 Setter 내부에서 `HasValue`나 `IsNullOrEmpty` 체크를 수행하여, 유효하지 않은 데이터(Null)가 전송되는 것을 원천적으로 차단하고 필수 데이터만 선별적으로 로그에 포함시킵니다.
 
@@ -1404,7 +1404,7 @@ public class UnityAnalyticsEvent : Event {
 
 <br>
 
-- [LoadingSceneManager.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/007_Manager/LoadingSceneManager.cs)
+- [LoadingSceneManager.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/007_Manager/LoadingSceneManager.cs)
 
 게임 초기화의 전체 흐름을 제어하는 코루틴입니다. `SocialLogin`(소셜 로그인), `CheckVersion`(버전 확인 및 데이터 다운로드), `LoadProductData`(구매 복원), `DownloadNotice`(공지사항 다운로드) 등 각 단계를 순차적으로 실행하며, `yield return`을 통해 앞선 프로세스가 완료된 후에만 다음 단계로 진입하여 초기화 순서를 보장합니다.
 
@@ -1505,12 +1505,12 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 게임 내 데이터는 DB 구조에 맞춰 형식화된 Excel 파일로 작성됩니다. Excel 파일에는 데이터 유효성 검사 기능을 적용하여 잘못된 값이 입력될 경우 작성자에게 경고합니다. 이후 기획팀에서 작성한 Excel 파일을 외부 도구인 `DataParser`에 입력하고 변환이 시작되면 `DataConverter`가 다중 시트를 병렬로 처리하여 SQLite DB에 파싱합니다. 파싱 완료 후 `DataChecker`를 통해 DB 내 참조 무결성 검증과 에셋 폴더의 실제 파일 존재 여부를 대조하여 누락된 데이터를 리스트업하고, 문제가 있다면 수정합니다.
 
  - Excel 파일로 형식화 한 데이터 예제
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/001_Shambles/002_Image/Example_ExcelData.png" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/001_Shambles/002_Image/Example_ExcelData.png" width="600">
 
  - 데이터 파서 작동 이미지
-<img src="https://raw.githubusercontent.com/ysh4267/Yangjihoon_portfolio/main/900_ExternalTool/001_DataParser/Build/Capture.PNG" width="600">
+<img src="https://raw.githubusercontent.com/ysh4267/ysh4267/main/900_ExternalTool/001_DataParser/Build/Capture.PNG" width="600">
 
-[DataParser](https://github.com/ysh4267/Yangjihoon_portfolio/tree/main/900_ExternalTool/001_DataParser)
+[DataParser](https://github.com/ysh4267/ysh4267/tree/main/900_ExternalTool/001_DataParser)
 
 ### 5.2. 확장 메소드
 
@@ -1522,7 +1522,7 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 *   **Transform 위치**: `MoveLocalX/Y/Z`, `SetLocalX/Y/Z` 등으로 Transform의 개별 축 값을 이동하거나 설정하는 메소드를 제공합니다.
 *   **랜덤 선택**: 리스트에서 단일/다중 랜덤 선택, Fisher-Yates 셔플, 가중치 기반 랜덤 선택(`RandomizeByWeight`) 등을 지원합니다.
 
-[ExtendedMethods.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/009_Utility/ExtendedMethods.cs)
+[ExtendedMethods.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/009_Utility/ExtendedMethods.cs)
 
 ### 5.3. 에디터 확장
 
@@ -1537,7 +1537,7 @@ IEnumerator DownloadGameData(VersionData currentVersion, VersionData latestVersi
 
 <br>
 
-- [LoadSceneWindow.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/009_Utility/LoadSceneWindow.cs)
+- [LoadSceneWindow.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/009_Utility/LoadSceneWindow.cs)
 
 ```csharp
 public class LoadSceneWindow : EditorWindow {
@@ -1610,7 +1610,7 @@ public class LoadSceneWindow : EditorWindow {
 
 <br>
 
-- [TagEnumUpdater.cs](https://github.com/ysh4267/Yangjihoon_portfolio/blob/main/001_Shambles/001_Script/009_Utility/TagEnumUpdater.cs)
+- [TagEnumUpdater.cs](https://github.com/ysh4267/ysh4267/blob/main/001_Shambles/001_Script/009_Utility/TagEnumUpdater.cs)
 
 ```csharp
 [InitializeOnLoad]
